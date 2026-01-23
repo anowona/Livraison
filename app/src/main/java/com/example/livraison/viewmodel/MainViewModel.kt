@@ -1,5 +1,6 @@
 package com.example.livraison.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.livraison.data.repository.OrderRepository
@@ -8,6 +9,7 @@ import com.example.livraison.model.OrderStatus
 import com.example.livraison.model.Product
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -74,7 +76,7 @@ class MainViewModel : ViewModel() {
                 )
                 val orderId = repository.createOrder(order)
                 clearCart()
-                observeOrder(orderId) // auto-start tracking
+                observeCurrentOrder(userId) // auto-start tracking
                 onSuccess(orderId)
             } catch (e: Exception) {
                 onError(e.message ?: "Failed to create order")
@@ -82,39 +84,38 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // -------------------------
-    // Observe single order
-    // -------------------------
-    fun observeOrder(orderId: String) {
-        orderListener?.remove()
-        orderListener = db.collection("orders")
-            .document(orderId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null || !snapshot.exists()) {
-                    _currentOrder.value = null
-                    return@addSnapshotListener
-                }
-                _currentOrder.value = snapshot.toObject(Order::class.java)
-                    ?.copy(id = snapshot.id)
-            }
-    }
 
     // -------------------------
     // Observe current order by user
     // -------------------------
-    fun observeCurrentOrder(userId: String, callback: (Order?) -> Unit) {
-        db.collection("orders")
-            .whereEqualTo("userId", userId)
-            .whereIn("status", listOf(
-                OrderStatus.CREATED.name,
-                OrderStatus.PREPARING.name,
-                OrderStatus.ON_THE_WAY.name
-            ))
-            .addSnapshotListener { snapshots, _ ->
-                val order = snapshots?.documents?.firstOrNull()?.toObject(Order::class.java)
-                _currentOrder.value = order
-                callback(order)
-            }
+    fun observeCurrentOrder(userId: String) {
+        try {
+            var orderListenerr=orderListener
+            orderListenerr?.remove()
+            orderListenerr = db.collection("orders")
+                .whereEqualTo("userId", userId)
+                .whereIn(
+                    "status",
+                    listOf(
+                        OrderStatus.CREATED.name,
+                        OrderStatus.PREPARING.name,
+                        OrderStatus.ON_THE_WAY.name
+                    )
+                )
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(1)
+                .addSnapshotListener { snapshots, _ ->
+                    val doc = snapshots?.documents?.firstOrNull()
+                    _currentOrder.value = doc
+                        ?.toObject(Order::class.java)
+                        ?.copy(id = doc.id)
+                }
+        } catch (e: Exception) {
+            println("Error observing current order: ${e.message}")
+            Log.e("MainViewModel", "Error observing current order", e)
+        }
+
+
     }
 
     // -------------------------

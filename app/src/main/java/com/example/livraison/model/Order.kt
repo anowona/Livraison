@@ -1,5 +1,8 @@
 package com.example.livraison.model
 
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.ServerTimestamp
+
 
 data class Order(
     val id: String = "",
@@ -7,5 +10,6 @@ data class Order(
     val products: List<Product> = emptyList(),
     val total: Double = 0.0,
     val status: OrderStatus = OrderStatus.CREATED,
-    val createdAt: Long = System.currentTimeMillis()
+    @ServerTimestamp
+    val createdAt: Timestamp? = null
 )

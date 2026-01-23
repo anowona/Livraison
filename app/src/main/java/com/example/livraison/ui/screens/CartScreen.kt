@@ -1,5 +1,6 @@
 package com.example.livraison.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -42,6 +43,7 @@ fun CartScreen(
 
         Button(onClick = {
             val uid = authViewModel.currentUserId
+            Log.d("CartScreen", "User ID: $uid")
             if (uid.isBlank()) {
                 // Show a toast/snackbar instead of crashing
                 println("Error: user not logged in")
@@ -53,7 +55,6 @@ fun CartScreen(
                 total = cart.sumOf { it.price },
                 onSuccess = { orderId ->
                     // Start listening to the order for tracking
-                    vm.observeOrder(orderId)
                     navController.navigate("tracking")
                 },
                 onError = { errorMsg ->

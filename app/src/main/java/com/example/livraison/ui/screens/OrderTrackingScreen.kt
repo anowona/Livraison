@@ -1,5 +1,6 @@
 package com.example.livraison.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -20,17 +21,19 @@ fun OrderTrackingScreen(
     userId: String
 ) {
     val scope = rememberCoroutineScope()
-    var currentOrder by vm.currentOrder.collectAsState()
+    val currentOrder by vm.currentOrder.collectAsState()
 
     LaunchedEffect(userId) {
-        vm.observeCurrentOrder(userId) { order ->
-            currentOrder = order
-        }
+        vm.observeCurrentOrder(userId)
+    }
+    LaunchedEffect(currentOrder) {
+        Log.d("OrderTracking", "currentOrder = $currentOrder")
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
     ) {
         Text("Order Tracking", fontSize = 22.sp)
         Spacer(modifier = Modifier.height(16.dp))
@@ -43,19 +46,6 @@ fun OrderTrackingScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(onClick = {
-                scope.launch { vm.updateOrderStatus(currentOrder!!.id, OrderStatus.PREPARING) }
-            }) { Text("Preparing") }
-
-            Button(onClick = {
-                scope.launch { vm.updateOrderStatus(currentOrder!!.id, OrderStatus.ON_THE_WAY) }
-            }) { Text("On the way") }
-
-            Button(onClick = {
-                scope.launch { vm.updateOrderStatus(currentOrder!!.id, OrderStatus.DELIVERED) }
-            }) { Text("Delivered") }
-
-            Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { navController.navigate("map") }) {
                 Text("Voir le livreur sur la carte")
             }
