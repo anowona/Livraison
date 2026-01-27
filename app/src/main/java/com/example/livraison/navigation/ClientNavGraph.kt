@@ -12,40 +12,15 @@ import com.example.livraison.viewmodel.AuthViewModel
 import com.example.livraison.viewmodel.MainViewModel
 
 @Composable
-fun NavGraph(vm: MainViewModel, navController: NavHostController) {
+fun ClientNavGraph(vm: MainViewModel, navController: NavHostController) {
     val authViewModel: AuthViewModel = viewModel()
     val authState by authViewModel.uiState.collectAsState()
     val isLoggedIn = authState.user != null
 
-    NavHost(navController, startDestination = "routing") {
-        composable("routing") {
-            RoutingScreen(navController)
-        }
-        composable("login") {
-            if (isLoggedIn) {
-                navController.navigate("home") { popUpTo("login") { inclusive = true } }
-            } else {
-                LoginScreen(authViewModel, navController)
-            }
-        }
-        composable("register") {
-            if (isLoggedIn) {
-                navController.navigate("home") { popUpTo("register") { inclusive = true } }
-            } else {
-                RegisterScreen(authViewModel, navController)
-            }
-        }
-        composable("role_selection") {
-            RoleSelectionScreen(navController)
-        }
+    NavHost(navController, startDestination = "home") {
         composable("home") {
-            val userRole = authState.role
-            if (userRole == "driver") {
-                DriverDashboardScreen()
-            } else {
-                HomeScreen(vm) {
-                    navController.navigate("cart")
-                }
+            HomeScreen(vm) {
+                navController.navigate("cart")
             }
         }
         composable("cart") {
@@ -77,9 +52,6 @@ fun NavGraph(vm: MainViewModel, navController: NavHostController) {
         }
         composable("order_history") {
             OrderHistoryScreen(vm, authViewModel)
-        }
-        composable("driver_dashboard") {
-            DriverDashboardScreen()
         }
     }
 }

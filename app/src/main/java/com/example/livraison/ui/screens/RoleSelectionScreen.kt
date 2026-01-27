@@ -34,7 +34,8 @@ fun RoleSelectionScreen(navController: NavHostController) {
                     .set(mapOf("role" to role), SetOptions.merge())
                     .addOnSuccessListener {
                         isLoading = false
-                        navController.navigate("home") { popUpTo("role_selection") { inclusive = true } }
+                        val destination = if (role == "livreur") "driver_dashboard" else "home"
+                        navController.navigate(destination) { popUpTo("role_selection") { inclusive = true } }
                     }
                     .addOnFailureListener { e ->
                         isLoading = false

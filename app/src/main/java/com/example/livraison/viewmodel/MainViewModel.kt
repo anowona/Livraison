@@ -33,6 +33,10 @@ class MainViewModel : ViewModel() {
 
     private var orderListener: ListenerRegistration? = null
 
+    // Order History
+    private val _orderHistory = MutableStateFlow<List<Order>>(emptyList())
+    val orderHistory: StateFlow<List<Order>> = _orderHistory
+
     // -------------------------
     // Load products
     // -------------------------
@@ -115,6 +119,19 @@ class MainViewModel : ViewModel() {
         }
 
 
+    }
+
+    // -------------------------
+    // Load order history
+    // -------------------------
+    fun loadOrderHistory(userId: String) {
+        viewModelScope.launch {
+            try {
+                _orderHistory.value = repository.getOrdersByUser(userId)
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error loading order history", e)
+            }
+        }
     }
 
     // -------------------------
