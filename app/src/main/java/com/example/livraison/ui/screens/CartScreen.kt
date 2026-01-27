@@ -15,7 +15,8 @@ import com.example.livraison.viewmodel.MainViewModel
 fun CartScreen(
     vm: MainViewModel,
     authViewModel: AuthViewModel,
-    navController: NavHostController
+    navController: NavHostController,
+    onCheckout: () -> Unit // Add this parameter
 ) {
     val cart by vm.cart.collectAsState()
 
@@ -41,27 +42,7 @@ fun CartScreen(
         Text("Total: ${cart.sumOf { it.price }} €", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {
-            val uid = authViewModel.currentUserId
-            Log.d("CartScreen", "User ID: $uid")
-            if (uid.isBlank()) {
-                // Show a toast/snackbar instead of crashing
-                println("Error: user not logged in")
-                return@Button
-            }
-
-            vm.createOrder(
-                userId = uid,
-                total = cart.sumOf { it.price },
-                onSuccess = { orderId ->
-                    // Start listening to the order for tracking
-                    navController.navigate("tracking")
-                },
-                onError = { errorMsg ->
-                    println("Failed to create order: $errorMsg")
-                }
-            )
-        }) {
+        Button(onClick = onCheckout) { // Use the onCheckout lambda
             Text("Commander")
         }
 

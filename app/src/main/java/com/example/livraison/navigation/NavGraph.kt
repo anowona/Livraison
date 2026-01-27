@@ -1,6 +1,8 @@
 package com.example.livraison.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -8,19 +10,27 @@ import androidx.navigation.compose.composable
 import com.example.livraison.ui.screens.*
 import com.example.livraison.viewmodel.AuthViewModel
 import com.example.livraison.viewmodel.MainViewModel
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun NavGraph(vm: MainViewModel, navController: NavHostController) {
     val authViewModel: AuthViewModel = viewModel()
-    val currentUserId = authViewModel.currentUserId
+    val authState by authViewModel.uiState.collectAsState()
+    val isLoggedIn = authState.user != null
 
-    NavHost(navController, startDestination = "login") {
+    NavHost(navController, startDestination = "home") {
         composable("login") {
-            LoginScreen(authViewModel, navController)
+            if (isLoggedIn) {
+                navController.navigate("home") { popUpTo("login") { inclusive = true } }
+            } else {
+                LoginScreen(authViewModel, navController)
+            }
         }
         composable("register") {
-            RegisterScreen(authViewModel, navController)
+            if (isLoggedIn) {
+                navController.navigate("home") { popUpTo("register") { inclusive = true } }
+            } else {
+                RegisterScreen(authViewModel, navController)
+            }
         }
         composable("role_selection") {
             RoleSelectionScreen(navController)
@@ -31,15 +41,31 @@ fun NavGraph(vm: MainViewModel, navController: NavHostController) {
             }
         }
         composable("cart") {
-            CartScreen(vm, authViewModel, navController)
+            val onCheckout = {
+                if (isLoggedIn) {
+                    navController.navigate("tracking")
+                } else {
+                    navController.navigate("login")
+                }
+            }
+            CartScreen(vm, authViewModel, navController, onCheckout)
         }
         composable("tracking") {
-            if (currentUserId.isNotBlank()) {
+            val currentUserId = authState.user?.uid
+            if (!currentUserId.isNullOrBlank()) {
                 OrderTrackingScreen(vm, navController, currentUserId)
             }
         }
         composable("map") {
             OSMMapScreen()
+        }
+        composable("profile") { // Added profile route
+            if (isLoggedIn) {
+                // Create a ProfileScreen for logged in users
+                 ProfileScreen(authViewModel, navController)
+            } else {
+                LoginScreen(authViewModel, navController)
+            }
         }
     }
 }

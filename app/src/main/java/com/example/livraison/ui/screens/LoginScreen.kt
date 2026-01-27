@@ -10,55 +10,63 @@ import androidx.navigation.NavHostController
 import com.example.livraison.viewmodel.AuthViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun LoginScreen(authViewModel: AuthViewModel, navController: NavHostController) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp),
+    if (uiState.loginSuccess) {
+        LaunchedEffect(Unit) {
+            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@LaunchedEffect
+            FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .get()
+                .addOnSuccessListener { doc ->
+                    val role = doc.getString("role")
+                    if (role.isNullOrEmpty()) {
+                        navController.navigate("role_selection") { popUpTo("login") { inclusive = true } }
+                    } else {
+                        navController.navigate("home") { popUpTo("login") { inclusive = true } }
+                    }
+                }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        TextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
+        TextField(
+            value = uiState.email,
+            onValueChange = { authViewModel.onEmailChange(it) },
+            label = { Text("Email") },
+            isError = uiState.errorMessage != null
+        )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
-            value = password,
-            onValueChange = { password = it },
+            value = uiState.password,
+            onValueChange = { authViewModel.onPasswordChange(it) },
             label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation()
+            visualTransformation = PasswordVisualTransformation(),
+            isError = uiState.errorMessage != null
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {
-            authViewModel.login(email, password) { success ->
-                if (success) {
-                    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@login
-                    FirebaseFirestore.getInstance()
-                        .collection("users")
-                        .document(uid)
-                        .get()
-                        .addOnSuccessListener { doc ->
-                            val role = doc.getString("role")
-                            if (role.isNullOrEmpty()) {
-                                navController.navigate("role_selection") { popUpTo("login") { inclusive = true } }
-                            } else {
-                                navController.navigate("home") { popUpTo("login") { inclusive = true } }
-                            }
-                        }
-                } else {
-                    errorMessage = "Login failed. Check your credentials."
-                }
+        Button(onClick = { authViewModel.login() }, enabled = !uiState.loginInProgress) {
+            if (uiState.loginInProgress) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            } else {
+                Text("Login")
             }
-        }) {
-            Text("Login")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
         TextButton(onClick = { navController.navigate("register") }) { Text("Register") }
 
-        errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        uiState.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
 }

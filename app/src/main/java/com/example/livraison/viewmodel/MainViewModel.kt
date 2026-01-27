@@ -90,9 +90,8 @@ class MainViewModel : ViewModel() {
     // -------------------------
     fun observeCurrentOrder(userId: String) {
         try {
-            var orderListenerr=orderListener
-            orderListenerr?.remove()
-            orderListenerr = db.collection("orders")
+            orderListener?.remove()
+            orderListener = db.collection("orders")
                 .whereEqualTo("userId", userId)
                 .whereIn(
                     "status",
