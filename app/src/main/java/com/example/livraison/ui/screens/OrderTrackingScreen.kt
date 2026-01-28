@@ -1,6 +1,5 @@
 package com.example.livraison.ui.screens
 
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -8,16 +7,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.navigation.NavHostController
 import com.example.livraison.model.OrderStatus
+import com.example.livraison.network.RetrofitInstance
 import com.example.livraison.viewmodel.MainViewModel
+import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.library.R
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,22 +34,40 @@ fun OrderTrackingScreen(
     userId: String
 ) {
     val currentOrder by vm.currentOrder.collectAsState()
+    var routeGeometry by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    // Get colors from the theme here, within the @Composable context
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
 
     LaunchedEffect(userId) {
         vm.observeCurrentOrder(userId)
     }
-    LaunchedEffect(currentOrder) {
-        Log.d("OrderTracking", "currentOrder = $currentOrder")
+
+    // Effect to fetch the route when locations change
+    LaunchedEffect(currentOrder?.driverLocation, currentOrder?.address?.geoPoint) {
+        val driverLoc = currentOrder?.driverLocation
+        val customerLoc = currentOrder?.address?.geoPoint
+        if (driverLoc != null && customerLoc != null) {
+            scope.launch {
+                try {
+                    val coordinates = "${driverLoc.longitude},${driverLoc.latitude};${customerLoc.longitude},${customerLoc.latitude}"
+                    val response = RetrofitInstance.routingApi.getRoute(coordinates)
+                    if (response.routes.isNotEmpty()) {
+                        routeGeometry = response.routes[0].geometry
+                    }
+                } catch (e: Exception) {
+                    // Handle exceptions
+                }
+            }
+        }
     }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Track Your Order") }) }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (currentOrder == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No active order found.", style = MaterialTheme.typography.bodyLarge)
@@ -55,38 +80,73 @@ fun OrderTrackingScreen(
                     OrderStatusIndicator(status = order.status)
                 }
 
-                if (order.driverLocation != null) {
-                    val driverLocation = order.driverLocation!!
-                    val geoPoint = GeoPoint(driverLocation.latitude, driverLocation.longitude)
-
+                Card(modifier = Modifier.fillMaxWidth().height(450.dp).padding(horizontal = 16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
                     AndroidView(
                         modifier = Modifier.fillMaxSize(),
                         factory = { context ->
                             Configuration.getInstance().load(context, androidx.preference.PreferenceManager.getDefaultSharedPreferences(context))
-                            MapView(context).apply {
-                                setTileSource(TileSourceFactory.MAPNIK)
-                                setMultiTouchControls(true)
-                                controller.setZoom(17.0)
-                            }
+                            MapView(context).apply { setMultiTouchControls(true) }
                         },
                         update = { mapView ->
                             mapView.overlays.clear()
-                            val driverMarker = Marker(mapView)
-                            driverMarker.position = geoPoint
-                            driverMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                            mapView.overlays.add(driverMarker)
-                            mapView.controller.setCenter(geoPoint)
+                            val points = mutableListOf<GeoPoint>()
+                            val context = mapView.context
+                            val defaultMarker = ContextCompat.getDrawable(context, R.drawable.marker_default)!!
+
+                            // 1. Add Customer Address Marker
+                            order.address?.geoPoint?.let {
+                                val geoPoint = GeoPoint(it.latitude, it.longitude)
+                                val customerMarkerIcon = defaultMarker.mutate()
+                                DrawableCompat.setTint(customerMarkerIcon, primaryColor.toArgb())
+                                val customerMarker = Marker(mapView).apply {
+                                    position = geoPoint
+                                    title = "Delivery Address"
+                                    icon = customerMarkerIcon
+                                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                }
+                                mapView.overlays.add(customerMarker)
+                                points.add(geoPoint)
+                            }
+
+                            // 2. Add Driver Location Marker
+                            order.driverLocation?.let {
+                                val geoPoint = GeoPoint(it.latitude, it.longitude)
+                                val driverMarkerIcon = defaultMarker.mutate()
+                                DrawableCompat.setTint(driverMarkerIcon, secondaryColor.toArgb())
+                                val driverMarker = Marker(mapView).apply {
+                                    position = geoPoint
+                                    title = "Driver"
+                                    icon = driverMarkerIcon
+                                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                }
+                                mapView.overlays.add(driverMarker)
+                                points.add(geoPoint)
+                            }
+
+                            // 3. Draw the Route
+                            routeGeometry?.let {
+                                val routePoints = decodePolyline(it, 5) // Use the helper function
+                                val polyline = Polyline().apply {
+                                    setPoints(routePoints)
+                                    outlinePaint.color = Color(0xFF4A80F5).toArgb()
+                                    outlinePaint.strokeWidth = 12f
+                                }
+                                mapView.overlays.add(0, polyline)
+                            }
+
+                            // 4. Auto-zoom
+                            if (points.size > 1) {
+                                mapView.post {
+                                    val boundingBox = BoundingBox.fromGeoPoints(points)
+                                    mapView.zoomToBoundingBox(boundingBox, true, 150)
+                                }
+                            } else if (points.isNotEmpty()){
+                                mapView.controller.setZoom(16.0)
+                                mapView.controller.setCenter(points[0])
+                            }
                             mapView.invalidate()
                         }
                     )
-                } else {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Waiting for driver...", style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
                 }
             }
         }
@@ -116,4 +176,44 @@ fun OrderStatusIndicator(status: OrderStatus) {
                 .clip(MaterialTheme.shapes.medium)
         )
     }
+}
+
+/**
+ * Decodes a polyline string into a list of GeoPoints.
+ * This is a self-contained version of the logic from osmdroid's Polyline class.
+ */
+private fun decodePolyline(encoded: String, precision: Int): List<GeoPoint> {
+    val poly = ArrayList<GeoPoint>()
+    var index = 0
+    val len = encoded.length
+    var lat = 0
+    var lng = 0
+    val factor = Math.pow(10.0, precision.toDouble())
+
+    while (index < len) {
+        var b: Int
+        var shift = 0
+        var result = 0
+        do {
+            b = encoded[index++].code - 63
+            result = result or (b and 0x1f shl shift)
+            shift += 5
+        } while (b >= 0x20)
+        val dlat = if (result and 1 != 0) (result shr 1).inv() else result shr 1
+        lat += dlat
+
+        shift = 0
+        result = 0
+        do {
+            b = encoded[index++].code - 63
+            result = result or (b and 0x1f shl shift)
+            shift += 5
+        } while (b >= 0x20)
+        val dlng = if (result and 1 != 0) (result shr 1).inv() else result shr 1
+        lng += dlng
+
+        val p = GeoPoint(lat.toDouble() / factor, lng.toDouble() / factor)
+        poly.add(p)
+    }
+    return poly
 }

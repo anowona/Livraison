@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Looper
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import com.google.firebase.firestore.GeoPoint
@@ -24,6 +25,7 @@ object LocationUtils {
         val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
         if (!hasLocationPermission(context)) {
+            Log.w("LocationUtils", "Location permission not granted.")
             trySend(null)
             close()
             return@callbackFlow
@@ -39,13 +41,20 @@ object LocationUtils {
             override fun onLocationResult(locationResult: LocationResult) {
                 val location = locationResult.lastLocation
                 if (location != null) {
+                    Log.d("LocationUtils", "New location received: Lat=${location.latitude}, Lon=${location.longitude}")
                     trySend(GeoPoint(location.latitude, location.longitude))
+                } else {
+                    Log.w("LocationUtils", "Location result was null.")
                 }
             }
         }
 
+        Log.d("LocationUtils", "Requesting location updates...")
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
 
-        awaitClose { fusedLocationClient.removeLocationUpdates(locationCallback) }
+        awaitClose { 
+            Log.d("LocationUtils", "Stopping location updates.")
+            fusedLocationClient.removeLocationUpdates(locationCallback) 
+        }
     }
 }

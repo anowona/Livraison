@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.livraison.data.repository.OrderRepository
+import com.example.livraison.model.Address
 import com.example.livraison.model.Category
 import com.example.livraison.model.Order
 import com.example.livraison.model.OrderStatus
@@ -73,25 +74,16 @@ class MainViewModel : ViewModel() {
         loadProducts()
     }
 
-    // -------------------------
-    // Search
-    // -------------------------
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }
 
-    // -------------------------
-    // Load products
-    // -------------------------
     private fun loadProducts() {
         viewModelScope.launch {
             _categories.value = getCategorizedMenu()
         }
     }
 
-    // -------------------------
-    // Cart operations
-    // -------------------------
     fun addToCart(product: Product) {
         _cart.value = _cart.value + product
     }
@@ -100,12 +92,10 @@ class MainViewModel : ViewModel() {
         _cart.value = emptyList()
     }
 
-    // -------------------------
-    // Create order
-    // -------------------------
     fun createOrder(
         userId: String,
         total: Double,
+        address: Address,
         onSuccess: (orderId: String) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -115,11 +105,12 @@ class MainViewModel : ViewModel() {
                     userId = userId,
                     products = _cart.value,
                     total = total,
+                    address = address,
                     status = OrderStatus.CREATED
                 )
                 val orderId = repository.createOrder(order)
                 clearCart()
-                observeCurrentOrder(userId) // auto-start tracking
+                observeCurrentOrder(userId)
                 onSuccess(orderId)
             } catch (e: Exception) {
                 onError(e.message ?: "Failed to create order")
@@ -127,9 +118,6 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // -------------------------
-    // Observe current order by user
-    // -------------------------
     fun observeCurrentOrder(userId: String) {
         try {
             orderListener?.remove()
@@ -147,14 +135,10 @@ class MainViewModel : ViewModel() {
                     _currentOrder.value = doc?.let { Order.fromMap(it.data!!).copy(id = it.id) }
                 }
         } catch (e: Exception) {
-            println("Error observing current order: ${e.message}")
             Log.e("MainViewModel", "Error observing current order", e)
         }
     }
 
-    // -------------------------
-    // Load order history
-    // -------------------------
     fun loadOrderHistory(userId: String) {
         viewModelScope.launch {
             repository.getOrdersByUserFlow(userId)
