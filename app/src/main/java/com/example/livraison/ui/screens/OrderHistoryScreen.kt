@@ -100,7 +100,7 @@ fun OrderHistoryCard(order: Order) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Order #${order.id.take(6)}...",
+                    text = "Order #${order.id}...",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

@@ -16,16 +16,17 @@ import com.example.livraison.viewmodel.MainViewModel
 @Composable
 fun ClientMainScreen() {
     val navController = rememberNavController()
-    val vm: MainViewModel = viewModel()
+    val mainViewModel: MainViewModel = viewModel()
 
     Scaffold(
         bottomBar = { BottomNavigationBar(
             navController = navController, userRole = "client",
-            driverViewModel = null
+            driverViewModel = null,
+            mainViewModel = mainViewModel
         ) }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
-            ClientNavGraph(vm = vm, navController = navController)
+            ClientNavGraph(vm = mainViewModel, navController = navController)
         }
     }
 }

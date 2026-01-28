@@ -20,7 +20,8 @@ fun DriverMainScreen() {
     Scaffold(
         bottomBar = { BottomNavigationBar(
             navController = navController, userRole = "livreur",
-            driverViewModel = driverViewModel
+            driverViewModel = driverViewModel,
+            mainViewModel = null
         ) }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {

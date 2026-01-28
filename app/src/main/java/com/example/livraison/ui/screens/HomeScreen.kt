@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import com.example.livraison.model.Category
 import com.example.livraison.model.Product
@@ -25,13 +28,19 @@ fun HomeScreen(
     vm: MainViewModel,
     goToCart: () -> Unit
 ) {
-    val categories by vm.categories.collectAsState()
-    val cart by vm.cart.collectAsState()
-
-    LaunchedEffect(Unit) { vm.loadProducts() }
+    val categories by vm.filteredCategories.collectAsStateWithLifecycle()
+    val cart by vm.cart.collectAsStateWithLifecycle()
+    val searchQuery by vm.searchQuery.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Munchies") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Munchies") },
+                actions = {
+                    // The shopping cart icon is now here
+                }
+            )
+        },
         floatingActionButton = {
             if (cart.isNotEmpty()) {
                 BadgedBox(badge = { Badge { Text(cart.size.toString()) } }) {
@@ -42,20 +51,46 @@ fun HomeScreen(
             }
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(vertical = 16.dp)
-        ) {
-            categories.forEach { category ->
-                stickyHeader {
-                    CategoryHeader(name = category.name)
+        Column(Modifier.padding(padding)) {
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { vm.onSearchQueryChange(it) },
+                label = { Text("Search Products") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { vm.onSearchQueryChange("") }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear Search")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            if (categories.isEmpty() && searchQuery.isNotEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No products found for '$searchQuery'")
                 }
-                items(category.products) { product ->
-                    ProductCard(
-                        product = product,
-                        onAddToCart = { vm.addToCart(it) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    categories.forEach { category ->
+                        stickyHeader {
+                            CategoryHeader(name = category.name)
+                        }
+                        items(category.products) { product ->
+                            ProductCard(
+                                product = product,
+                                onAddToCart = { vm.addToCart(it) },
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -89,7 +124,10 @@ fun ProductCard(product: Product, onAddToCart: (Product) -> Unit, modifier: Modi
                     }
                 },
                 error = {
-                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(Icons.Default.Error, contentDescription = "Error loading image", tint = MaterialTheme.colorScheme.onErrorContainer)
                     }
                 }

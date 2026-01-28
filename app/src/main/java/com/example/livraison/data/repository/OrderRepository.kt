@@ -1,10 +1,10 @@
 package com.example.livraison.data.repository
 
-import android.util.Log
 import com.example.livraison.model.Order
-import com.google.firebase.Firebase
+import com.example.livraison.model.OrderStatus
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -12,102 +12,92 @@ import kotlinx.coroutines.tasks.await
 
 class OrderRepository {
 
-    private val db = Firebase.firestore
+    private val db = FirebaseFirestore.getInstance()
     private val ordersRef = db.collection("orders")
 
+    // --- Order Creation ---
     suspend fun createOrder(order: Order): String {
         val docRef = ordersRef.add(order).await()
         return docRef.id
     }
 
-    suspend fun getOrdersByUser(userId: String): List<Order> {
-        Log.d("OrderRepo", "Fetching orders for userId: $userId")
-        val snapshot = ordersRef
-            .whereEqualTo("userId", userId)
-            .orderBy("createdAt", Query.Direction.DESCENDING) // <-- Added sorting
-            .get()
-            .await()
-
-        Log.d("OrderRepo", "Found ${snapshot.documents.size} documents.")
-
-        return snapshot.documents.mapNotNull { doc ->
-            Log.d("OrderRepo", "Document data: ${doc.data}")
-            try {
-                val order = doc.toObject(Order::class.java)
-                if (order == null) {
-                    Log.w("OrderRepo", "Document ${doc.id} could not be converted to Order object.")
-                    null
-                } else {
-                    val finalOrder = order.copy(id = doc.id)
-                    Log.d("OrderRepo", "Successfully mapped document ${doc.id} to order: $finalOrder")
-                    finalOrder
-                }
-            } catch (e: Exception) {
-                Log.e("OrderRepo", "Error converting document ${doc.id}", e)
-                null
-            }
-        }
+    // --- Order Updates ---
+    suspend fun acceptOrder(orderId: String, driverId: String) {
+        ordersRef.document(orderId).update(
+            mapOf("driverId" to driverId, "status" to OrderStatus.PREPARING.name)
+        ).await()
     }
 
-    fun getOrdersByUserFlow(userId: String): Flow<List<Order>> = callbackFlow {
-        val listener = ordersRef
-            .whereEqualTo("userId", userId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshots, e ->
-                if (e != null) {
-                    Log.w("OrderRepo", "Listen failed.", e)
-                    close(e) // Close the flow on error
-                    return@addSnapshotListener
-                }
-
-                val orders = snapshots?.documents?.mapNotNull { doc ->
-                    try {
-                        val order = doc.toObject(Order::class.java)
-                        order?.copy(id = doc.id)
-                    } catch (e: Exception) {
-                        Log.e("OrderRepo", "Error converting document ${doc.id}", e)
-                        null
-                    }
-                } ?: emptyList()
-
-                Log.d("OrderRepo", "Flow update: Got ${orders.size} orders")
-                trySend(orders)
-            }
-
-        awaitClose {
-            Log.d("OrderRepo", "Closing orders listener")
-            listener.remove()
-        }
+    suspend fun updateOrderStatus(orderId: String, newStatus: OrderStatus) {
+        ordersRef.document(orderId).update("status", newStatus.name).await()
     }
 
-    fun getOrdersByDriverFlow(driverId: String): Flow<List<Order>> = callbackFlow {
-        val listener = ordersRef
-            .whereEqualTo("driverId", driverId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
+    suspend fun updateDriverLocation(orderId: String, location: GeoPoint) {
+        ordersRef.document(orderId).update("driverLocation", location).await()
+    }
+
+    // --- Real-time Data Flows ---
+
+    fun getAvailableOrdersFlow(): Flow<List<Order>> = callbackFlow {
+        val listener = ordersRef.whereEqualTo("status", OrderStatus.CREATED.name)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
-                    Log.w("OrderRepo", "Driver order listen failed.", e)
                     close(e)
                     return@addSnapshotListener
                 }
-
-                val orders = snapshots?.documents?.mapNotNull { doc ->
-                    try {
-                        val order = doc.toObject(Order::class.java)
-                        order?.copy(id = doc.id)
-                    } catch (e: Exception) {
-                        Log.e("OrderRepo", "Error converting driver order document ${doc.id}", e)
-                        null
-                    }
+                val orders = snapshots?.documents?.mapNotNull {
+                    it.toObject(Order::class.java)?.copy(id = it.id)
                 } ?: emptyList()
-
-                Log.d("OrderRepo", "Driver flow update: Got ${orders.size} orders")
                 trySend(orders)
             }
+        awaitClose { listener.remove() }
+    }
 
-        awaitClose {
-            Log.d("OrderRepo", "Closing driver orders listener")
-            listener.remove()
-        }
+    fun getActiveOrdersForDriverFlow(driverId: String): Flow<List<Order>> = callbackFlow {
+        val listener = ordersRef.whereEqualTo("driverId", driverId)
+            .whereIn("status", listOf(OrderStatus.PREPARING.name, OrderStatus.ON_THE_WAY.name))
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    close(e)
+                    return@addSnapshotListener
+                }
+                val orders = snapshots?.documents?.mapNotNull {
+                    it.toObject(Order::class.java)?.copy(id = it.id)
+                } ?: emptyList()
+                trySend(orders)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    fun getOrdersByUserFlow(userId: String): Flow<List<Order>> = callbackFlow {
+        val listener = ordersRef.whereEqualTo("userId", userId)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    close(e)
+                    return@addSnapshotListener
+                }
+                val orders = snapshots?.documents?.mapNotNull {
+                    it.toObject(Order::class.java)?.copy(id = it.id)
+                } ?: emptyList()
+                trySend(orders)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    fun getOrdersByDriverFlow(driverId: String): Flow<List<Order>> = callbackFlow {
+        val listener = ordersRef.whereEqualTo("driverId", driverId)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    close(e)
+                    return@addSnapshotListener
+                }
+                val orders = snapshots?.documents?.mapNotNull {
+                    it.toObject(Order::class.java)?.copy(id = it.id)
+                } ?: emptyList()
+                trySend(orders)
+            }
+        awaitClose { listener.remove() }
     }
 }

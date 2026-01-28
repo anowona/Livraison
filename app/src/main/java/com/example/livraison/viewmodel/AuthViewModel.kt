@@ -17,9 +17,12 @@ import kotlinx.coroutines.tasks.await
 data class LoginUiState(
     val email: String = "",
     val password: String = "",
+    val confirmPassword: String = "", // Added for registration
     val errorMessage: String? = null,
     val profileUpdateMessage: String? = null,
     val loginInProgress: Boolean = false,
+    val registrationInProgress: Boolean = false, // Added for registration
+    val registrationSuccess: Boolean = false, // Added for registration
     val user: FirebaseUser? = null,
     val role: String? = null,
     val isRoleLoading: Boolean = true
@@ -36,16 +39,14 @@ class AuthViewModel : ViewModel() {
     private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
         val user = firebaseAuth.currentUser
         if (user != null) {
-            // User is logged in
-            _uiState.update { it.copy(user = user, isRoleLoading = true) } // Set user and start loading role
+            _uiState.update { it.copy(user = user, isRoleLoading = true) }
             fetchUserRole(user)
         } else {
-            // User is logged out
-            _uiState.update { it.copy(user = null, role = null, isRoleLoading = false) } // Clear everything
+            _uiState.update { it.copy(user = null, role = null, isRoleLoading = false) }
         }
     }
 
-    val currentUid = uiState.value.user?.uid // Use the safe-call operator ?.
+    val currentUid = uiState.value.user?.uid
 
     init {
         auth.addAuthStateListener(authStateListener)
@@ -65,7 +66,7 @@ class AuthViewModel : ViewModel() {
             }
             .addOnFailureListener { e ->
                 Log.w("AuthViewModel", "Error fetching user role", e)
-                _uiState.update { it.copy(role = null, isRoleLoading = false) } // Role is unknown
+                _uiState.update { it.copy(role = null, isRoleLoading = false) }
             }
     }
 
@@ -75,6 +76,10 @@ class AuthViewModel : ViewModel() {
 
     fun onPasswordChange(password: String) {
         _uiState.update { it.copy(password = password) }
+    }
+
+    fun onConfirmPasswordChange(password: String) {
+        _uiState.update { it.copy(confirmPassword = password) }
     }
 
     fun login() {
@@ -88,7 +93,6 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 auth.signInWithEmailAndPassword(_uiState.value.email, _uiState.value.password).await()
-                // The authStateListener will handle the rest.
                 _uiState.update { it.copy(loginInProgress = false) }
             } catch (e: Exception) {
                 _uiState.update {
@@ -102,16 +106,49 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun register(email: String, password: String, callback: (Boolean) -> Unit) {
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    callback(true)
+    fun register() {
+        val state = _uiState.value
+        if (!Patterns.EMAIL_ADDRESS.matcher(state.email).matches()) {
+            _uiState.update { it.copy(errorMessage = "Invalid email format.") }
+            return
+        }
+        if (state.password.length < 6) {
+             _uiState.update { it.copy(errorMessage = "Password must be at least 6 characters long.") }
+            return
+        }
+        if (state.password != state.confirmPassword) {
+            _uiState.update { it.copy(errorMessage = "Passwords do not match.") }
+            return
+        }
+
+        _uiState.update { it.copy(registrationInProgress = true, errorMessage = null) }
+
+        viewModelScope.launch {
+            try {
+                val authResult = auth.createUserWithEmailAndPassword(state.email, state.password).await()
+                val newUser = authResult.user
+                if (newUser != null) {
+                    val userProfile = mapOf("role" to "client")
+                    db.collection("users").document(newUser.uid).set(userProfile).await()
+                    // The authStateListener will handle the rest automatically
+                    _uiState.update { it.copy(registrationInProgress = false, registrationSuccess = true) }
                 } else {
-                    Log.e("AuthViewModel", "Registration failed", task.exception)
-                    callback(false)
+                    throw IllegalStateException("User was null after registration.")
                 }
+            } catch (e: Exception) {
+                 _uiState.update {
+                    it.copy(
+                        registrationInProgress = false,
+                        errorMessage = e.message ?: "Registration failed."
+                    )
+                }
+                Log.e("AuthViewModel", "Registration failed", e)
             }
+        }
+    }
+    
+    fun resetRegistrationStatus() {
+        _uiState.update { it.copy(registrationSuccess = false) }
     }
 
     fun updateProfile(displayName: String) {

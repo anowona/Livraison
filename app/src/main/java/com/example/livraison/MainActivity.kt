@@ -18,7 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.livraison.ui.screens.ClientMainScreen
 import com.example.livraison.ui.screens.DriverMainScreen
 import com.example.livraison.ui.screens.LoginScreen
-import com.example.livraison.ui.screens.RoleSelectionScreen
+import com.example.livraison.ui.screens.RegisterScreen
 import com.example.livraison.ui.theme.LivraisonTheme
 import com.example.livraison.viewmodel.AuthViewModel
 
@@ -39,9 +39,9 @@ class MainActivity : ComponentActivity() {
                             authState.user == null -> "login"
                             authState.role == "livreur" -> "driver_main"
                             authState.role == "client" -> "client_main"
-                            else -> "role_selection" // User is logged in but has no role
+                            else -> "loading" // User is logged in but has no role, wait on loading screen
                         }
-                        
+
                         // Avoid navigating if we are already at the correct destination
                         if (navController.currentDestination?.route != destination) {
                             navController.navigate(destination) {
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     composable("login") { LoginScreen(authViewModel, navController) }
-                    composable("role_selection") { RoleSelectionScreen(navController) }
+                    composable("register") { RegisterScreen(authViewModel, navController) }
                     composable("client_main") { ClientMainScreen() }
                     composable("driver_main") { DriverMainScreen() }
                 }

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -19,13 +20,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.livraison.viewmodel.DriverViewModel
+import com.example.livraison.viewmodel.MainViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun BottomNavigationBar(
     navController: NavController,
     userRole: String?,
-    driverViewModel: DriverViewModel?
+    driverViewModel: DriverViewModel?,
+    mainViewModel: MainViewModel?
 ) {
     val items = when (userRole) {
         "livreur" -> listOf(
@@ -39,6 +42,11 @@ fun BottomNavigationBar(
             NavigationItem.Profile
         )
     }
+
+    val cartStateFlow = mainViewModel?.cart ?: MutableStateFlow(emptyList())
+    val cart by cartStateFlow.collectAsState()
+    val cartCount = cart.size
+
 
     val availableOrdersStateFlow = driverViewModel?.availableOrders ?: MutableStateFlow(emptyList())
     val availableOrders by availableOrdersStateFlow.collectAsState()
@@ -61,7 +69,19 @@ fun BottomNavigationBar(
                         ) {
                             Icon(item.icon, contentDescription = item.title)
                         }
-                    } else {
+                    } else if (item.route == NavigationItem.Cart.route) {
+                        BadgedBox(
+                            badge = {
+                                // Only show the badge if there are orders
+                                if (cartCount > 0) {
+                                    Badge { Text(text = "$cartCount") }
+                                }
+                            }
+                        ) {
+                            Icon(item.icon, contentDescription = item.title)
+                        }
+                    }
+                    else {
                         // Regular icon for other items
                         Icon(item.icon, contentDescription = item.title)
                     }

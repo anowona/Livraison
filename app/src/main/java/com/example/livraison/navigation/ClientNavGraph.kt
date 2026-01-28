@@ -28,7 +28,9 @@ fun ClientNavGraph(vm: MainViewModel, navController: NavHostController) {
         composable("cart") {
             val onCheckout = {
                 if (isLoggedIn) {
-                    navController.navigate("tracking")
+                    navController.navigate("tracking") {
+                        popUpTo("cart") { inclusive = true } // This will remove the cart from the back stack
+                    }
                 } else {
                     navController.navigate("login")
                 }

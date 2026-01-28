@@ -12,8 +12,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
@@ -25,9 +29,35 @@ class MainViewModel : ViewModel() {
     private val _cart = MutableStateFlow<List<Product>>(emptyList())
     val cart: StateFlow<List<Product>> = _cart
 
-    // Categories
+    // Original categories list
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
-    val categories: StateFlow<List<Category>> = _categories
+
+    // Search query state
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
+    // Filtered categories based on search
+    val filteredCategories: StateFlow<List<Category>> = _searchQuery
+        .combine(_categories) { query, categories ->
+            if (query.isBlank()) {
+                categories
+            } else {
+                categories.mapNotNull { category ->
+                    val filteredProducts = category.products.filter {
+                        it.name.contains(query, ignoreCase = true)
+                    }
+                    if (filteredProducts.isNotEmpty()) {
+                        category.copy(products = filteredProducts)
+                    } else {
+                        null
+                    }
+                }
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     // Current Order
     private val _currentOrder = MutableStateFlow<Order?>(null)
@@ -39,10 +69,21 @@ class MainViewModel : ViewModel() {
     private val _orderHistory = MutableStateFlow<List<Order>>(emptyList())
     val orderHistory: StateFlow<List<Order>> = _orderHistory
 
+    init {
+        loadProducts()
+    }
+
+    // -------------------------
+    // Search
+    // -------------------------
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+    }
+
     // -------------------------
     // Load products
     // -------------------------
-    fun loadProducts() {
+    private fun loadProducts() {
         viewModelScope.launch {
             _categories.value = getCategorizedMenu()
         }
