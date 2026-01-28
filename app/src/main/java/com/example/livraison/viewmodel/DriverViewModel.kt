@@ -62,6 +62,8 @@ class DriverViewModel : ViewModel() {
             }
     }
 
+
+
     fun acceptOrder(order: Order, driverId: String) {
         ordersRef.document(order.id)
             .update(

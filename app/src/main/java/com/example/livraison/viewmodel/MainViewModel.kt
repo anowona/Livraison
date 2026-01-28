@@ -12,6 +12,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
@@ -107,11 +108,13 @@ class MainViewModel : ViewModel() {
                 )
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .limit(1)
-                .addSnapshotListener { snapshots, _ ->
+                .addSnapshotListener { snapshots, e ->
+                    if (e != null) {
+                        Log.w("MainViewModel", "Listen failed.", e)
+                        return@addSnapshotListener
+                    }
                     val doc = snapshots?.documents?.firstOrNull()
-                    _currentOrder.value = doc
-                        ?.toObject(Order::class.java)
-                        ?.copy(id = doc.id)
+                    _currentOrder.value = doc?.let { Order.fromMap(it.data!!).copy(id = it.id) }
                 }
         } catch (e: Exception) {
             println("Error observing current order: ${e.message}")
@@ -126,11 +129,13 @@ class MainViewModel : ViewModel() {
     // -------------------------
     fun loadOrderHistory(userId: String) {
         viewModelScope.launch {
-            try {
-                _orderHistory.value = repository.getOrdersByUser(userId)
-            } catch (e: Exception) {
-                Log.e("MainViewModel", "Error loading order history", e)
-            }
+            repository.getOrdersByUserFlow(userId)
+                .catch { e ->
+                    Log.e("MainViewModel", "Error loading order history", e)
+                }
+                .collect { orders ->
+                    _orderHistory.value = orders
+                }
         }
     }
 

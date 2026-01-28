@@ -9,11 +9,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.livraison.ui.screens.*
 import com.example.livraison.viewmodel.AuthViewModel
+import com.example.livraison.viewmodel.DriverViewModel
 import com.example.livraison.viewmodel.MainViewModel
 
 @Composable
 fun NavGraph(vm: MainViewModel, navController: NavHostController) {
     val authViewModel: AuthViewModel = viewModel()
+    val driverViewModel: DriverViewModel = viewModel()
+
     val authState by authViewModel.uiState.collectAsState()
     val isLoggedIn = authState.user != null
 
@@ -41,7 +44,10 @@ fun NavGraph(vm: MainViewModel, navController: NavHostController) {
         composable("home") {
             val userRole = authState.role
             if (userRole == "driver") {
-                DriverDashboardScreen()
+                DriverDashboardScreen(
+                    driverViewModel = driverViewModel,
+                    authViewModel = authViewModel
+                )
             } else {
                 HomeScreen(vm) {
                     navController.navigate("cart")
@@ -79,7 +85,10 @@ fun NavGraph(vm: MainViewModel, navController: NavHostController) {
             OrderHistoryScreen(vm, authViewModel)
         }
         composable("driver_dashboard") {
-            DriverDashboardScreen()
+            DriverDashboardScreen(
+                driverViewModel = driverViewModel,
+                authViewModel = authViewModel
+            )
         }
     }
 }

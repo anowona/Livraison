@@ -19,7 +19,10 @@ fun ClientMainScreen() {
     val vm: MainViewModel = viewModel()
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController = navController, userRole = "client") }
+        bottomBar = { BottomNavigationBar(
+            navController = navController, userRole = "client",
+            driverViewModel = null
+        ) }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             ClientNavGraph(vm = vm, navController = navController)

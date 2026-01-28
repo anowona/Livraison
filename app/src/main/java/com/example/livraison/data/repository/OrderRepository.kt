@@ -5,6 +5,9 @@ import com.example.livraison.model.Order
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 class OrderRepository {
@@ -43,6 +46,37 @@ class OrderRepository {
                 Log.e("OrderRepo", "Error converting document ${doc.id}", e)
                 null
             }
+        }
+    }
+
+    fun getOrdersByUserFlow(userId: String): Flow<List<Order>> = callbackFlow {
+        val listener = ordersRef
+            .whereEqualTo("userId", userId)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.w("OrderRepo", "Listen failed.", e)
+                    close(e) // Close the flow on error
+                    return@addSnapshotListener
+                }
+
+                val orders = snapshots?.documents?.mapNotNull { doc ->
+                    try {
+                        val order = doc.toObject(Order::class.java)
+                        order?.copy(id = doc.id)
+                    } catch (e: Exception) {
+                        Log.e("OrderRepo", "Error converting document ${doc.id}", e)
+                        null
+                    }
+                } ?: emptyList()
+
+                Log.d("OrderRepo", "Flow update: Got ${orders.size} orders")
+                trySend(orders)
+            }
+
+        awaitClose {
+            Log.d("OrderRepo", "Closing orders listener")
+            listener.remove()
         }
     }
 }

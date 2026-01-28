@@ -14,7 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun LoginScreen(authViewModel: AuthViewModel, navController: NavHostController) {
     val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
 
-    // The RoutingScreen will handle navigation once the user is logged in.
+    // The MainActivity router will handle navigation once the user is logged in.
 
     Column(
         modifier = Modifier

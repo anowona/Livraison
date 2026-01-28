@@ -22,13 +22,15 @@ import com.example.livraison.viewmodel.AuthViewModel
 import com.example.livraison.viewmodel.DriverViewModel
 
 @Composable
-fun DriverDashboardScreen() {
-    val driverViewModel: DriverViewModel = viewModel()
-    val authViewModel: AuthViewModel = viewModel()
+fun DriverDashboardScreen(driverViewModel: DriverViewModel, authViewModel: AuthViewModel) {
+
     val availableOrders by driverViewModel.availableOrders.collectAsState()
     val myOrders by driverViewModel.myOrders.collectAsState()
     val currentUser = authViewModel.uiState.collectAsState().value.user
 
+    // 3. IMPORTANT: REMOVE this LaunchedEffect.
+    // We will move this logic to a higher level.
+    /*
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
             Log.d("DriverDashboard", "User is not null, fetching orders for UID: ${currentUser.uid}")
@@ -37,6 +39,7 @@ fun DriverDashboardScreen() {
             Log.w("DriverDashboard", "User is null. Cannot fetch orders.")
         }
     }
+    */
 
     Column(
         modifier = Modifier

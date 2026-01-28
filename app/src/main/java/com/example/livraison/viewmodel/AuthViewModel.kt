@@ -35,13 +35,17 @@ class AuthViewModel : ViewModel() {
 
     private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
         val user = firebaseAuth.currentUser
-        _uiState.update { it.copy(user = user) }
         if (user != null) {
+            // User is logged in
+            _uiState.update { it.copy(user = user, isRoleLoading = true) } // Set user and start loading role
             fetchUserRole(user)
         } else {
-            _uiState.update { it.copy(role = null, isRoleLoading = false) }
+            // User is logged out
+            _uiState.update { it.copy(user = null, role = null, isRoleLoading = false) } // Clear everything
         }
     }
+
+    val currentUid = uiState.value.user?.uid // Use the safe-call operator ?.
 
     init {
         auth.addAuthStateListener(authStateListener)
@@ -53,7 +57,6 @@ class AuthViewModel : ViewModel() {
     }
 
     private fun fetchUserRole(user: FirebaseUser) {
-        _uiState.update { it.copy(isRoleLoading = true) }
         db.collection("users").document(user.uid).get()
             .addOnSuccessListener { document ->
                 val role = document.getString("role")
@@ -79,12 +82,13 @@ class AuthViewModel : ViewModel() {
             _uiState.update { it.copy(errorMessage = "Invalid email format.") }
             return
         }
-
+        
         _uiState.update { it.copy(loginInProgress = true, errorMessage = null) }
 
         viewModelScope.launch {
             try {
                 auth.signInWithEmailAndPassword(_uiState.value.email, _uiState.value.password).await()
+                // The authStateListener will handle the rest.
                 _uiState.update { it.copy(loginInProgress = false) }
             } catch (e: Exception) {
                 _uiState.update {

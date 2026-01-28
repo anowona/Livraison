@@ -33,9 +33,8 @@ fun RoleSelectionScreen(navController: NavHostController) {
                 db.collection("users").document(uid)
                     .set(mapOf("role" to role), SetOptions.merge())
                     .addOnSuccessListener {
+                        // The router in MainActivity will handle navigation
                         isLoading = false
-                        val destination = if (role == "livreur") "driver_dashboard" else "home"
-                        navController.navigate(destination) { popUpTo("role_selection") { inclusive = true } }
                     }
                     .addOnFailureListener { e ->
                         isLoading = false

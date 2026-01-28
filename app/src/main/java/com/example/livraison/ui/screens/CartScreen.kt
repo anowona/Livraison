@@ -13,12 +13,15 @@ import com.example.livraison.viewmodel.MainViewModel
 
 @Composable
 fun CartScreen(
-    vm: MainViewModel,
+    mainViewModel: MainViewModel,
     authViewModel: AuthViewModel,
     navController: NavHostController,
     onCheckout: () -> Unit // Add this parameter
 ) {
-    val cart by vm.cart.collectAsState()
+    val cart by mainViewModel.cart.collectAsState()
+    val currentUserId = authViewModel.currentUid
+
+
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text("Your Cart", style = MaterialTheme.typography.headlineSmall)
@@ -42,7 +45,28 @@ fun CartScreen(
         Text("Total: ${cart.sumOf { it.price }} €", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = onCheckout) { // Use the onCheckout lambda
+
+        Button(onClick = {
+            val uid = currentUserId?: ""
+            Log.d("CartScreen", "User ID: $uid")
+            if (uid.isBlank()) {
+                // Show a toast/snackbar instead of crashing
+                println("Error: user not logged in")
+                return@Button
+            }
+
+            mainViewModel.createOrder(
+                userId = uid,
+                total = cart.sumOf { it.price },
+                onSuccess = {  _ ->
+                    // The underscore indicates the orderId parameter is intentionally unused.
+                    onCheckout() // Assuming onCheckout is a function
+                },
+                onError = { errorMsg ->
+                    println("Failed to create order: $errorMsg")
+                }
+            )
+        }) {
             Text("Commander")
         }
 
