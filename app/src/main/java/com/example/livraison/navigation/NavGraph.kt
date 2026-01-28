@@ -64,12 +64,7 @@ fun NavGraph(vm: MainViewModel, navController: NavHostController) {
             }
             CartScreen(vm, authViewModel, navController, onCheckout)
         }
-        composable("tracking") {
-            val currentUserId = authState.user?.uid
-            if (!currentUserId.isNullOrBlank()) {
-                OrderTrackingScreen(vm, navController, currentUserId)
-            }
-        }
+
         composable("map") {
             OSMMapScreen()
         }
@@ -81,14 +76,6 @@ fun NavGraph(vm: MainViewModel, navController: NavHostController) {
                 LoginScreen(authViewModel, navController)
             }
         }
-        composable("order_history") {
-            OrderHistoryScreen(vm, authViewModel)
-        }
-        composable("driver_dashboard") {
-            DriverDashboardScreen(
-                driverViewModel = driverViewModel,
-                authViewModel = authViewModel
-            )
-        }
+
     }
 }

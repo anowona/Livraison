@@ -9,10 +9,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.livraison.ui.screens.*
 import com.example.livraison.viewmodel.AuthViewModel
+import com.example.livraison.viewmodel.DriverViewModel
 import com.example.livraison.viewmodel.MainViewModel
 
 @Composable
 fun ClientNavGraph(vm: MainViewModel, navController: NavHostController) {
+    val driverViewModel: DriverViewModel = viewModel()
     val authViewModel: AuthViewModel = viewModel()
     val authState by authViewModel.uiState.collectAsState()
     val isLoggedIn = authState.user != null
@@ -51,7 +53,10 @@ fun ClientNavGraph(vm: MainViewModel, navController: NavHostController) {
             }
         }
         composable("order_history") {
-            OrderHistoryScreen(vm, authViewModel)
+            OrderHistoryScreen(
+                vm, authViewModel,
+                driverViewModel = driverViewModel
+            )
         }
     }
 }

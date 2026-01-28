@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.livraison.data.repository.OrderRepository
+import com.example.livraison.model.Category
 import com.example.livraison.model.Order
 import com.example.livraison.model.OrderStatus
 import com.example.livraison.model.Product
@@ -24,9 +25,9 @@ class MainViewModel : ViewModel() {
     private val _cart = MutableStateFlow<List<Product>>(emptyList())
     val cart: StateFlow<List<Product>> = _cart
 
-    // Products
-    private val _products = MutableStateFlow<List<Product>>(emptyList())
-    val products: StateFlow<List<Product>> = _products
+    // Categories
+    private val _categories = MutableStateFlow<List<Category>>(emptyList())
+    val categories: StateFlow<List<Category>> = _categories
 
     // Current Order
     private val _currentOrder = MutableStateFlow<Order?>(null)
@@ -43,11 +44,7 @@ class MainViewModel : ViewModel() {
     // -------------------------
     fun loadProducts() {
         viewModelScope.launch {
-            _products.value = listOf(
-                Product(1, "Burger", 5.0),
-                Product(2, "Pizza", 7.5),
-                Product(3, "Soda", 2.0)
-            )
+            _categories.value = getCategorizedMenu()
         }
     }
 
@@ -89,7 +86,6 @@ class MainViewModel : ViewModel() {
         }
     }
 
-
     // -------------------------
     // Observe current order by user
     // -------------------------
@@ -98,14 +94,7 @@ class MainViewModel : ViewModel() {
             orderListener?.remove()
             orderListener = db.collection("orders")
                 .whereEqualTo("userId", userId)
-                .whereIn(
-                    "status",
-                    listOf(
-                        OrderStatus.CREATED.name,
-                        OrderStatus.PREPARING.name,
-                        OrderStatus.ON_THE_WAY.name
-                    )
-                )
+                .whereIn("status", listOf(OrderStatus.CREATED.name, OrderStatus.PREPARING.name, OrderStatus.ON_THE_WAY.name))
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .limit(1)
                 .addSnapshotListener { snapshots, e ->
@@ -120,8 +109,6 @@ class MainViewModel : ViewModel() {
             println("Error observing current order: ${e.message}")
             Log.e("MainViewModel", "Error observing current order", e)
         }
-
-
     }
 
     // -------------------------
@@ -130,26 +117,50 @@ class MainViewModel : ViewModel() {
     fun loadOrderHistory(userId: String) {
         viewModelScope.launch {
             repository.getOrdersByUserFlow(userId)
-                .catch { e ->
-                    Log.e("MainViewModel", "Error loading order history", e)
-                }
-                .collect { orders ->
-                    _orderHistory.value = orders
-                }
+                .catch { e -> Log.e("MainViewModel", "Error loading order history", e) }
+                .collect { orders -> _orderHistory.value = orders }
         }
-    }
-
-    // -------------------------
-    // Update order status
-    // -------------------------
-    fun updateOrderStatus(orderId: String, status: OrderStatus) {
-        db.collection("orders")
-            .document(orderId)
-            .update("status", status.name)
     }
 
     override fun onCleared() {
         orderListener?.remove()
         super.onCleared()
+    }
+
+    private fun getCategorizedMenu(): List<Category> {
+        return listOf(
+            Category(
+                name = "Burgers",
+                products = listOf(
+                    Product(1, "Classic Burger", 8.99, "https://cdn.pixabay.com/photo/2016/03/05/19/02/hamburger-1238246_1280.jpg"),
+                    Product(2, "Cheeseburger", 9.99, "https://cdn.pixabay.com/photo/2017/08/06/00/28/burger-2589259_1280.jpg"),
+                    Product(3, "Bacon Burger", 10.99, "https://cdn.pixabay.com/photo/2019/01/29/18/05/burger-3962496_1280.jpg")
+                )
+            ),
+            Category(
+                name = "Pizzas",
+                products = listOf(
+                    Product(4, "Margherita Pizza", 12.50, "https://cdn.pixabay.com/photo/2017/12/09/08/18/pizza-3007395_1280.jpg"),
+                    Product(5, "Pepperoni Pizza", 14.00, "https://cdn.pixabay.com/photo/2020/05/17/04/22/pizza-5179939_1280.jpg"),
+                    Product(6, "Vegetarian Pizza", 13.00, "https://cdn.pixabay.com/photo/2017/01/03/11/33/pizza-1949183_1280.jpg")
+                )
+            ),
+            Category(
+                name = "Desserts",
+                products = listOf(
+                    Product(7, "Chocolate Cake", 6.50, "https://cdn.pixabay.com/photo/2016/11/22/18/52/cake-1850011_1280.jpg"),
+                    Product(8, "Cheesecake", 7.00, "https://cdn.pixabay.com/photo/2018/05/01/18/21/eclair-3366430_1280.jpg"),
+                    Product(9, "Ice Cream Scoop", 3.00, "https://cdn.pixabay.com/photo/2017/06/29/20/09/ice-cream-2455593_1280.jpg")
+                )
+            ),
+            Category(
+                name = "Drinks",
+                products = listOf(
+                    Product(10, "Coca-Cola", 2.50, "https://cdn.pixabay.com/photo/2014/09/26/19/51/coca-cola-462776_1280.jpg"),
+                    Product(11, "Orange Juice", 3.00, "https://cdn.pixabay.com/photo/2017/01/20/15/06/oranges-1995056_1280.jpg"),
+                    Product(12, "Water Bottle", 1.50, "https://cdn.pixabay.com/photo/2018/01/07/16/07/water-3067838_1280.jpg")
+                )
+            )
+        )
     }
 }

@@ -1,6 +1,7 @@
 package com.example.livraison.model
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
@@ -12,7 +13,8 @@ data class Order(
     val total: Double = 0.0,
     val status: OrderStatus = OrderStatus.CREATED,
     @ServerTimestamp
-    val createdAt: Date? = null
+    val createdAt: Date? = null,
+    val driverLocation: GeoPoint? = null // Added for location tracking
 ) {
     // Add a custom deserializer for the 'createdAt' field
     @Suppress("UNCHECKED_CAST")
@@ -24,7 +26,8 @@ data class Order(
             "products" to products.map { it.toMap() },
             "total" to total,
             "status" to status.name,
-            "createdAt" to createdAt
+            "createdAt" to createdAt,
+            "driverLocation" to driverLocation
         )
     }
 
@@ -44,11 +47,12 @@ data class Order(
                 products = (map["products"] as? List<Map<String, Any>>)?.map { Product.fromMap(it) } ?: emptyList(),
                 total = map["total"] as Double,
                 status = OrderStatus.valueOf(map["status"] as String),
-                createdAt = createdAt
+                createdAt = createdAt,
+                driverLocation = map["driverLocation"] as? GeoPoint
             )
         }
     }
-    constructor() : this("", "", null, emptyList(), 0.0, OrderStatus.CREATED, null)
+    constructor() : this("", "", null, emptyList(), 0.0, OrderStatus.CREATED, null, null)
 }
 
 private fun Product.toMap(): Map<String, Any> {

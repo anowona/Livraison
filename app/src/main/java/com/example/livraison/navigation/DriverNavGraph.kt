@@ -11,14 +11,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.livraison.ui.screens.DriverDashboardScreen
 import com.example.livraison.ui.screens.LoginScreen
+import com.example.livraison.ui.screens.OrderHistoryScreen
 import com.example.livraison.ui.screens.ProfileScreen
 import com.example.livraison.viewmodel.AuthViewModel
 import com.example.livraison.viewmodel.DriverViewModel
+import com.example.livraison.viewmodel.MainViewModel
 
 @Composable
 fun DriverNavGraph(navController: NavHostController) {
     val authViewModel: AuthViewModel = viewModel()
     val driverViewModel: DriverViewModel = viewModel()
+    val mainViewModel: MainViewModel = viewModel()
     val authState by authViewModel.uiState.collectAsState()
     val isLoggedIn = authState.user != null
     val currentUser = authState.user
@@ -29,8 +32,6 @@ fun DriverNavGraph(navController: NavHostController) {
             Log.d("AppNavigation", "Driver logged in. Fetching orders for UID: ${currentUser.uid}")
             driverViewModel.fetchOrders(currentUser.uid)
         } else {
-            // Optional: You could add logic here to clear data if the user logs out
-            // or is not a driver. For now, we just log it.
             Log.d("AppNavigation", "User is not a driver or is logged out. No orders will be fetched.")
         }
     }
@@ -44,11 +45,13 @@ fun DriverNavGraph(navController: NavHostController) {
         }
         composable("profile") { // Added profile route
             if (isLoggedIn) {
-                // Create a ProfileScreen for logged in users
                 ProfileScreen(authViewModel, navController)
             } else {
                 LoginScreen(authViewModel, navController)
             }
+        }
+        composable("order_history") {
+            OrderHistoryScreen(mainViewModel, authViewModel, driverViewModel)
         }
     }
 }

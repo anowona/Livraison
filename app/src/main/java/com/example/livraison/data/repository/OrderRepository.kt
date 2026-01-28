@@ -79,4 +79,35 @@ class OrderRepository {
             listener.remove()
         }
     }
+
+    fun getOrdersByDriverFlow(driverId: String): Flow<List<Order>> = callbackFlow {
+        val listener = ordersRef
+            .whereEqualTo("driverId", driverId)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.w("OrderRepo", "Driver order listen failed.", e)
+                    close(e)
+                    return@addSnapshotListener
+                }
+
+                val orders = snapshots?.documents?.mapNotNull { doc ->
+                    try {
+                        val order = doc.toObject(Order::class.java)
+                        order?.copy(id = doc.id)
+                    } catch (e: Exception) {
+                        Log.e("OrderRepo", "Error converting driver order document ${doc.id}", e)
+                        null
+                    }
+                } ?: emptyList()
+
+                Log.d("OrderRepo", "Driver flow update: Got ${orders.size} orders")
+                trySend(orders)
+            }
+
+        awaitClose {
+            Log.d("OrderRepo", "Closing driver orders listener")
+            listener.remove()
+        }
+    }
 }
