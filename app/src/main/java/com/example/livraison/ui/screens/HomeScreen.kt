@@ -15,9 +15,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
+import com.example.livraison.R
 import com.example.livraison.model.Category
 import com.example.livraison.model.Product
 import com.example.livraison.viewmodel.MainViewModel
@@ -35,7 +37,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Munchies") },
+                title = { Text(stringResource(id = R.string.home_title)) },
                 actions = {
                     // The shopping cart icon is now here
                 }
@@ -45,7 +47,7 @@ fun HomeScreen(
             if (cart.isNotEmpty()) {
                 BadgedBox(badge = { Badge { Text(cart.size.toString()) } }) {
                     FloatingActionButton(onClick = goToCart) {
-                        Icon(Icons.Filled.ShoppingCart, contentDescription = "Shopping Cart")
+                        Icon(Icons.Filled.ShoppingCart, contentDescription = stringResource(id = R.string.shopping_cart))
                     }
                 }
             }
@@ -56,12 +58,12 @@ fun HomeScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { vm.onSearchQueryChange(it) },
-                label = { Text("Search Products") },
+                label = { Text(stringResource(id = R.string.search_products)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { vm.onSearchQueryChange("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear Search")
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(id = R.string.clear_search))
                         }
                     }
                 },
@@ -72,7 +74,7 @@ fun HomeScreen(
 
             if (categories.isEmpty() && searchQuery.isNotEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No products found for '$searchQuery'")
+                    Text(stringResource(id = R.string.no_products_found, searchQuery))
                 }
             } else {
                 LazyColumn(
@@ -128,7 +130,7 @@ fun ProductCard(product: Product, onAddToCart: (Product) -> Unit, modifier: Modi
                         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Error, contentDescription = "Error loading image", tint = MaterialTheme.colorScheme.onErrorContainer)
+                        Icon(Icons.Default.Error, contentDescription = stringResource(id = R.string.error_loading_image), tint = MaterialTheme.colorScheme.onErrorContainer)
                     }
                 }
             )
@@ -139,11 +141,11 @@ fun ProductCard(product: Product, onAddToCart: (Product) -> Unit, modifier: Modi
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(product.name, style = MaterialTheme.typography.titleMedium)
-                    Text("${product.price} €", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(id = R.string.order_total_formatted, product.price), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Button(onClick = { onAddToCart(product) }) {
-                    Text("Add")
+                    Text(stringResource(id = R.string.add_to_cart))
                 }
             }
         }

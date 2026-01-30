@@ -9,18 +9,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.navigation.NavHostController
+import com.example.livraison.R
 import com.example.livraison.model.OrderStatus
 import com.example.livraison.network.RetrofitInstance
 import com.example.livraison.utils.decodePolyline // Use the shared utility function
 import com.example.livraison.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
-import org.osmdroid.library.R
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -69,17 +70,20 @@ fun OrderTrackingScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Track Your Order") }) }
+        topBar = { TopAppBar(title = { Text(stringResource(id = R.string.track_your_order)) }) }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (currentOrder == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Loading order...", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(id = R.string.loading_order), style = MaterialTheme.typography.bodyLarge)
                 }
             } else {
                 val order = currentOrder!!
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Order #${order.id.take(6)}...", style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        stringResource(id = R.string.order_number_formatted, order.id.take(6)),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     OrderStatusIndicator(status = order.status)
                 }
@@ -87,7 +91,7 @@ fun OrderTrackingScreen(
                 // Only show the map for active orders
                 if (order.status == OrderStatus.DELIVERED || order.status == OrderStatus.CANCELED) {
                      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("This order has been completed.", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(id = R.string.order_completed), style = MaterialTheme.typography.bodyLarge)
                     }
                 } else if (order.driverLocation != null || order.address?.geoPoint != null) {
                     Card(modifier = Modifier.fillMaxWidth().height(450.dp).padding(horizontal = 16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
@@ -101,7 +105,7 @@ fun OrderTrackingScreen(
                                 mapView.overlays.clear()
                                 val points = mutableListOf<GeoPoint>()
                                 val context = mapView.context
-                                val defaultMarker = ContextCompat.getDrawable(context, R.drawable.marker_default)!!
+                                val defaultMarker = ContextCompat.getDrawable(context, org.osmdroid.library.R.drawable.marker_default)!!
 
                                 order.address?.geoPoint?.let {
                                     val geoPoint = GeoPoint(it.latitude, it.longitude)
@@ -109,7 +113,7 @@ fun OrderTrackingScreen(
                                     DrawableCompat.setTint(customerMarkerIcon, primaryColor.toArgb())
                                     Marker(mapView).apply {
                                         position = geoPoint
-                                        title = "Delivery Address"
+                                        title = context.getString(R.string.delivery_address)
                                         icon = customerMarkerIcon
                                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                         mapView.overlays.add(this)
@@ -123,7 +127,7 @@ fun OrderTrackingScreen(
                                     DrawableCompat.setTint(driverMarkerIcon, secondaryColor.toArgb())
                                     Marker(mapView).apply {
                                         position = geoPoint
-                                        title = "Driver"
+                                        title = context.getString(R.string.driver)
                                         icon = driverMarkerIcon
                                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                         mapView.overlays.add(this)
@@ -156,7 +160,7 @@ fun OrderTrackingScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator()
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("Waiting for driver location...", style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(id = R.string.waiting_for_driver_location), style = MaterialTheme.typography.titleMedium)
                         }
                     }
                 }
@@ -175,10 +179,13 @@ fun OrderStatusIndicator(status: OrderStatus) {
         OrderStatus.CANCELED -> 0.0f
     }
 
-    val animatedProgress by animateFloatAsState(targetValue = progress, label = "Order Progress")
+    val animatedProgress by animateFloatAsState(targetValue = progress, label = stringResource(id = R.string.order_progress))
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Status: $status", style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(id = R.string.order_status_formatted, status),
+            style = MaterialTheme.typography.titleMedium
+        )
         Spacer(modifier = Modifier.height(8.dp))
         LinearProgressIndicator(
             progress = { animatedProgress },

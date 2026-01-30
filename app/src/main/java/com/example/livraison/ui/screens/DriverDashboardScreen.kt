@@ -18,9 +18,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.livraison.R
 import com.example.livraison.model.Order
 import com.example.livraison.model.OrderStatus
 import com.example.livraison.utils.LocationUtils
@@ -44,15 +46,15 @@ fun DriverDashboardScreen(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             if (isGranted) {
-                Log.d("DriverDashboard", "Location permission granted.")
+                Log.d("DriverDashboard", context.getString(R.string.location_permission_granted))
             } else {
-                Log.w("DriverDashboard", "Location permission denied.")
+                Log.w("DriverDashboard", context.getString(R.string.location_permission_denied))
             }
         }
     )
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Driver Dashboard") }) }
+        topBar = { TopAppBar(title = { Text(stringResource(id = R.string.driver_dashboard_title)) }) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -61,9 +63,9 @@ fun DriverDashboardScreen(
                 .padding(horizontal = 16.dp)
         ) {
             // Section for My Active Orders
-            SectionTitle("My Active Orders")
+            SectionTitle(stringResource(id = R.string.my_active_orders))
             if (myOrders.isEmpty()) {
-                EmptyState(message = "You have no active orders.", modifier = Modifier.weight(1f))
+                EmptyState(message = stringResource(id = R.string.no_active_orders), modifier = Modifier.weight(1f))
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(myOrders) { order ->
@@ -96,9 +98,9 @@ fun DriverDashboardScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Section for Available Orders
-            SectionTitle("Available Orders")
+            SectionTitle(stringResource(id = R.string.available_orders))
             if (availableOrders.isEmpty()) {
-                EmptyState(message = "No available orders right now.", modifier = Modifier.weight(1f))
+                EmptyState(message = stringResource(id = R.string.no_available_orders), modifier = Modifier.weight(1f))
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(availableOrders) { order ->
@@ -125,21 +127,21 @@ fun MyOrderCard(order: Order, onUpdateClick: () -> Unit, onCardClick: () -> Unit
             .clickable(enabled = isCardClickable, onClick = onCardClick)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("Order ID: ${order.id.take(8)}...", style = MaterialTheme.typography.titleMedium)
-            Text("Status: ${order.status}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(id = R.string.order_id, order.id.take(8)), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(id = R.string.order_status_formatted, order.status), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 if (order.status == OrderStatus.PREPARING) {
                     Button(onClick = onUpdateClick) {
                         Icon(Icons.Default.LocalShipping, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("On the Way")
+                        Text(stringResource(id = R.string.on_the_way))
                     }
                 } else if (order.status == OrderStatus.ON_THE_WAY) {
                     Button(onClick = onUpdateClick) {
                         Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Delivered")
+                        Text(stringResource(id = R.string.delivered))
                     }
                 }
             }
@@ -165,11 +167,11 @@ fun AvailableOrderCard(order: Order, onAcceptClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text("New Order", style = MaterialTheme.typography.titleMedium)
-                Text("Total: ${order.total} €", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.new_order), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(id = R.string.total_euros, order.total), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
             }
             Button(onClick = onAcceptClick) {
-                Text("Accept")
+                Text(stringResource(id = R.string.accept))
             }
         }
     }

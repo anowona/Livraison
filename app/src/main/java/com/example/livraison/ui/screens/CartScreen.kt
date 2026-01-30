@@ -12,9 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.example.livraison.R
 import com.example.livraison.model.Address
 import com.example.livraison.model.Product
 import com.example.livraison.viewmodel.AuthViewModel
@@ -39,6 +42,7 @@ fun CartScreen(
 
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(addresses) {
         if (selectedAddress == null) {
@@ -47,17 +51,17 @@ fun CartScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("My Cart") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(id = R.string.my_cart)) }) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (cart.isNotEmpty()) {
                 Surface(shadowElevation = 8.dp) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         // Address Selector
-                        Text("Deliver to:", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(id = R.string.deliver_to), style = MaterialTheme.typography.titleMedium)
                         ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                             OutlinedTextField(
-                                value = selectedAddress?.name ?: "Select an address",
+                                value = selectedAddress?.name ?: stringResource(id = R.string.select_address),
                                 onValueChange = {},
                                 readOnly = true,
                                 trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
@@ -66,7 +70,7 @@ fun CartScreen(
                             ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                                 addresses.forEach { address ->
                                     DropdownMenuItem(
-                                        text = { Text("${address.name} - ${address.street}") },
+                                        text = { Text(stringResource(id = R.string.address_format, address.name, address.street)) },
                                         onClick = {
                                             selectedAddress = address
                                             expanded = false
@@ -78,17 +82,17 @@ fun CartScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text("Total: ${cart.sumOf { it.price }} €", style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(id = R.string.total, cart.sumOf { it.price }), style = MaterialTheme.typography.titleLarge)
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
                             onClick = {
                                 val uid = currentUserId ?: ""
                                 if (uid.isBlank()) {
-                                    scope.launch { snackbarHostState.showSnackbar("You must be logged in to place an order.") }
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.login_to_order)) }
                                     return@Button
                                 }
                                 if (selectedAddress == null) {
-                                    scope.launch { snackbarHostState.showSnackbar("Please select a delivery address.") }
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.select_delivery_address)) }
                                     return@Button
                                 }
 
@@ -98,14 +102,14 @@ fun CartScreen(
                                     address = selectedAddress!!,
                                     onSuccess = { onCheckout() },
                                     onError = { errorMsg ->
-                                        scope.launch { snackbarHostState.showSnackbar("Error: $errorMsg") }
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.order_error, errorMsg)) }
                                     }
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
                             enabled = selectedAddress != null
                         ) {
-                            Text("Commander")
+                            Text(stringResource(id = R.string.checkout))
                         }
                     }
                 }
@@ -115,7 +119,7 @@ fun CartScreen(
         Column(modifier = Modifier.padding(padding)) {
             if (cart.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Your cart is empty.", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(id = R.string.cart_empty), style = MaterialTheme.typography.bodyLarge)
                 }
             } else {
                 LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -143,7 +147,7 @@ fun ProductCartItem(product: Product) {
             )
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(product.name, style = MaterialTheme.typography.titleMedium)
-                Text("${'$'}{product.price} €", style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(id = R.string.order_total_formatted, product.price), style = MaterialTheme.typography.bodyLarge)
             }
         }
     }

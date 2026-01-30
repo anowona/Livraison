@@ -5,8 +5,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.livraison.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -17,13 +19,14 @@ fun RoleSelectionScreen(navController: NavHostController) {
     val db = FirebaseFirestore.getInstance()
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    val unknownError = stringResource(id = R.string.unknown_error)
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Choose your role", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(id = R.string.choose_your_role), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(24.dp))
 
         listOf("client", "livreur").forEach { role ->
@@ -38,7 +41,7 @@ fun RoleSelectionScreen(navController: NavHostController) {
                     }
                     .addOnFailureListener { e ->
                         isLoading = false
-                        errorMessage = e.message ?: "Unknown error"
+                        errorMessage = e.message ?: unknownError
                     }
             }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                 Text(role.replaceFirstChar { it.uppercase() })

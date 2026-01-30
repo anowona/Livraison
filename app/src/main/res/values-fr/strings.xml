@@ -1,0 +1,107 @@
+<resources>
+    <string name="app_name">Livraison</string>
+    <string name="order_history_title">Historique des commandes</string>
+    <string name="no_past_orders">Aucune commande antérieure trouvée.</string>
+    <string name="date_format">"d MMMM yyyy 'à' HH:mm"</string>
+    <string name="track_your_order">Suivre votre commande</string>
+    <string name="loading_order">Chargement de la commande...</string>
+    <string name="order_completed">Cette commande est terminée.</string>
+    <string name="delivery_address">Adresse de livraison</string>
+    <string name="driver">Livreur</string>
+    <string name="waiting_for_driver_location">En attente de la localisation du livreur...</string>
+    <string name="order_progress">Progression de la commande</string>
+    <string name="order_number_formatted">"Commande #%1$s..."</string>
+    <string name="order_status_formatted">"Statut : %1$s"</string>
+    <string name="order_total_formatted">"%1$s FCFA"</string>
+
+    <!-- CartScreen -->
+    <string name="my_cart">Mon panier</string>
+    <string name="deliver_to">Livrer à :</string>
+    <string name="select_address">Sélectionnez une adresse</string>
+    <string name="total">"Total : %1$s FCFA"</string>
+    <string name="checkout">Commander</string>
+    <string name="login_to_order">Vous devez être connecté pour passer une commande.</string>
+    <string name="select_delivery_address">Veuillez sélectionner une adresse de livraison.</string>
+    <string name="order_error">"Erreur : %1$s"</string>
+    <string name="cart_empty">Votre panier est vide.</string>
+    <string name="address_format">"%1$s - %2$s"</string>
+
+    <!-- HomeScreen -->
+    <string name="home_title">Munchies</string>
+    <string name="shopping_cart">Panier</string>
+    <string name="search_products">Rechercher des produits</string>
+    <string name="clear_search">Effacer la recherche</string>
+    <string name="no_products_found">"Aucun produit trouvé pour '%1$s'"</string>
+    <string name="add_to_cart">Ajouter</string>
+    <string name="error_loading_image">Erreur de chargement de l'image</string>
+
+    <!-- LoginScreen -->
+    <string name="welcome_back">Content de vous revoir</string>
+    <string name="login_to_continue">Connectez-vous pour continuer</string>
+    <string name="email">E-mail</string>
+    <string name="password">Mot de passe</string>
+    <string name="login">Connexion</string>
+    <string name="no_account_register">"Vous n'avez pas de compte ? S'inscrire"</string>
+    <string name="email_icon">Icône d'e-mail</string>
+    <string name="password_icon">Icône de mot de passe</string>
+
+    <!-- ProfileScreen -->
+    <string name="my_profile">Mon profil</string>
+    <string name="logged_in_as">Connecté en tant que :</string>
+    <string name="no_email_found">Aucun e-mail trouvé</string>
+    <string name="my_addresses">Mes adresses</string>
+    <string name="add_address">Ajouter une adresse</string>
+    <string name="no_addresses_saved">Aucune adresse enregistrée.</string>
+    <string name="view_order_history">Voir l'historique des commandes</string>
+    <string name="logout">Déconnexion</string>
+    <string name="add_new_address">Ajouter une nouvelle adresse</string>
+    <string name="address_name_hint">"Nom de l'adresse (ex: Domicile)"</string>
+    <string name="street">Rue</string>
+    <string name="city">Ville</string>
+    <string name="postal_code">Code postal</string>
+    <string name="add">Ajouter</string>
+    <string name="cancel">Annuler</string>
+    <string name="address_display_format">"%1$s, %2$s, %3$s"</string>
+
+    <!-- RegisterScreen -->
+    <string name="create_account">Créer un compte</string>
+    <string name="get_started">Démarrez avec Munchies</string>
+    <string name="confirm_password">Confirmer le mot de passe</string>
+    <string name="register">S'inscrire</string>
+    <string name="already_have_account">Vous avez déjà un compte ? Se connecter</string>
+    <string name="confirm_password_icon">Icône de confirmation du mot de passe</string>
+
+    <!-- DriverMapScreen -->
+    <string name="delivery_route">Itinéraire de livraison</string>
+    <string name="loading_order_details">Chargement des détails de la commande...</string>
+    <string name="delivering_to">Livraison à :</string>
+    <string name="address_not_available">Adresse non disponible</string>
+    <string name="your_location">Votre position</string>
+
+    <!-- BottomNavigationBar -->
+    <string name="home">Accueil</string>
+    <string name="cart">Panier</string>
+    <string name="profile">Profil</string>
+    <string name="dashboard">Tableau de bord</string>
+
+    <!-- RoleSelectionScreen -->
+    <string name="choose_your_role">Choisissez votre rôle</string>
+    <string name="unknown_error">Erreur inconnue</string>
+    <string name="role_client">Client</string>
+    <string name="role_livreur">Livreur</string>
+
+    <!-- DriverDashboardScreen -->
+    <string name="driver_dashboard_title">Tableau de bord du livreur</string>
+    <string name="my_active_orders">Mes commandes actives</string>
+    <string name="no_active_orders">Vous n'avez aucune commande active.</string>
+    <string name="available_orders">Commandes disponibles</string>
+    <string name="no_available_orders">Aucune commande disponible pour le moment.</string>
+    <string name="order_id">"ID de commande : %1$s..."</string>
+    <string name="on_the_way">En cours de livraison</string>
+    <string name="delivered">Livré</string>
+    <string name="new_order">Nouvelle commande</string>
+    <string name="total_euros">"Total : %1$s €"</string>
+    <string name="accept">Accepter</string>
+    <string name="location_permission_granted">Autorisation de localisation accordée.</string>
+    <string name="location_permission_denied">Autorisation de localisation refusée.</string>
+</resources>

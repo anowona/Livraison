@@ -26,9 +26,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.livraison.R
 import com.example.livraison.model.Order
 import com.example.livraison.viewmodel.AuthViewModel
 import com.example.livraison.viewmodel.DriverViewModel
@@ -48,7 +50,12 @@ fun OrderHistoryScreen(
     val user = authState.user
     val userRole = authState.role
 
-    val orderHistory: List<Order> by if (userRole == "livreur") { // Use "livreur"
+    val roleLivreur = stringResource(id = R.string.role_livreur)
+    val roleClient = stringResource(id = R.string.role_client)
+    val trackingRoute = "tracking?orderId="
+    val driverMapRoute = "driver_map/"
+
+    val orderHistory: List<Order> by if (userRole == roleLivreur) {
         driverViewModel.driverOrderHistory.collectAsState()
     } else {
         mainViewModel.orderHistory.collectAsState()
@@ -56,7 +63,7 @@ fun OrderHistoryScreen(
 
     LaunchedEffect(user, userRole) {
         if (user != null) {
-            if (userRole == "livreur") { // Use "livreur"
+            if (userRole == roleLivreur) {
                 driverViewModel.loadDriverOrderHistory(user.uid)
             } else {
                 mainViewModel.loadOrderHistory(user.uid)
@@ -65,14 +72,14 @@ fun OrderHistoryScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Order History") }) }
+        topBar = { TopAppBar(title = { Text(stringResource(id = R.string.order_history_title)) }) }
     ) { padding ->
         if (orderHistory.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No past orders found.", style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(id = R.string.no_past_orders), style = MaterialTheme.typography.bodyLarge)
             }
         } else {
             LazyColumn(
@@ -82,10 +89,10 @@ fun OrderHistoryScreen(
             ) {
                 items(orderHistory) { order ->
                     OrderHistoryCard(order = order, onClick = {
-                        if (userRole == "client") {
-                            navController.navigate("tracking?orderId=${order.id}")
-                        } else if (userRole == "livreur") {
-                            navController.navigate("driver_map/${order.id}")
+                        if (userRole == roleClient) {
+                            navController.navigate(trackingRoute + order.id)
+                        } else if (userRole == roleLivreur) {
+                            navController.navigate(driverMapRoute + order.id)
                         }
                     })
                 }
@@ -96,7 +103,7 @@ fun OrderHistoryScreen(
 
 @Composable
 fun OrderHistoryCard(order: Order, onClick: () -> Unit) {
-    val dateFormatter = SimpleDateFormat("MMMM d, yyyy 'at' h:mm a", Locale.getDefault())
+    val dateFormatter = SimpleDateFormat(stringResource(id = R.string.date_format), Locale.getDefault())
 
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -109,19 +116,19 @@ fun OrderHistoryCard(order: Order, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Order #${order.id.take(6)}...",
+                    text = stringResource(id = R.string.order_number_formatted, order.id.take(6)),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${order.total} €",
+                    text = stringResource(id = R.string.order_total_formatted, order.total),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Status: ${order.status}",
+                text = stringResource(id = R.string.order_status_formatted, order.status),
                 style = MaterialTheme.typography.bodyMedium
             )
             order.createdAt?.let {

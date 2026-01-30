@@ -1,3 +1,107 @@
 <resources>
     <string name="app_name">Livraison</string>
+    <string name="order_history_title">Order History</string>
+    <string name="no_past_orders">No past orders found.</string>
+    <string name="date_format">"MMMM d, yyyy 'at' h:mm a"</string>
+    <string name="track_your_order">Track Your Order</string>
+    <string name="loading_order">Loading order...</string>
+    <string name="order_completed">This order has been completed.</string>
+    <string name="delivery_address">Delivery Address</string>
+    <string name="driver">Driver</string>
+    <string name="waiting_for_driver_location">Waiting for driver location...</string>
+    <string name="order_progress">Order Progress</string>
+    <string name="order_number_formatted">"Order #%1$s..."</string>
+    <string name="order_status_formatted">"Status: %1$s"</string>
+    <string name="order_total_formatted">"%1$s FCFA"</string>
+
+    <!-- CartScreen -->
+    <string name="my_cart">My Cart</string>
+    <string name="deliver_to">Deliver to:</string>
+    <string name="select_address">Select an address</string>
+    <string name="total">"Total: %1$s FCFA"</string>
+    <string name="checkout">Commander</string>
+    <string name="login_to_order">You must be logged in to place an order.</string>
+    <string name="select_delivery_address">Please select a delivery address.</string>
+    <string name="order_error">"Error: %1$s"</string>
+    <string name="cart_empty">Your cart is empty.</string>
+    <string name="address_format">"%1$s - %2$s"</string>
+
+    <!-- HomeScreen -->
+    <string name="home_title">Munchies</string>
+    <string name="shopping_cart">Shopping Cart</string>
+    <string name="search_products">Search Products</string>
+    <string name="clear_search">Clear Search</string>
+    <string name="no_products_found">"No products found for '%1$s'"</string>
+    <string name="add_to_cart">Add</string>
+    <string name="error_loading_image">Error loading image</string>
+
+    <!-- LoginScreen -->
+    <string name="welcome_back">Welcome Back</string>
+    <string name="login_to_continue">Login to continue</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="no_account_register">"Don't have an account? Register"</string>
+    <string name="email_icon">Email Icon</string>
+    <string name="password_icon">Password Icon</string>
+
+    <!-- ProfileScreen -->
+    <string name="my_profile">My Profile</string>
+    <string name="logged_in_as">Logged in as:</string>
+    <string name="no_email_found">No email found</string>
+    <string name="my_addresses">My Addresses</string>
+    <string name="add_address">Add Address</string>
+    <string name="no_addresses_saved">No addresses saved.</string>
+    <string name="view_order_history">View Order History</string>
+    <string name="logout">Logout</string>
+    <string name="add_new_address">Add New Address</string>
+    <string name="address_name_hint">"Address Name (e.g. Home)"</string>
+    <string name="street">Street</string>
+    <string name="city">City</string>
+    <string name="postal_code">Postal Code</string>
+    <string name="add">Add</string>
+    <string name="cancel">Cancel</string>
+    <string name="address_display_format">"%1$s, %2$s, %3$s"</string>
+
+    <!-- RegisterScreen -->
+    <string name="create_account">Create an Account</string>
+    <string name="get_started">Get started with Munchies</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="register">Register</string>
+    <string name="already_have_account">Already have an account? Login</string>
+    <string name="confirm_password_icon">Confirm Password Icon</string>
+
+    <!-- DriverMapScreen -->
+    <string name="delivery_route">Delivery Route</string>
+    <string name="loading_order_details">Loading order details...</string>
+    <string name="delivering_to">Delivering to:</string>
+    <string name="address_not_available">Address not available</string>
+    <string name="your_location">Your Location</string>
+
+    <!-- BottomNavigationBar -->
+    <string name="home">Home</string>
+    <string name="cart">Cart</string>
+    <string name="profile">Profile</string>
+    <string name="dashboard">Dashboard</string>
+
+    <!-- RoleSelectionScreen -->
+    <string name="choose_your_role">Choose your role</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="role_client">Client</string>
+    <string name="role_livreur">Livreur</string>
+
+    <!-- DriverDashboardScreen -->
+    <string name="driver_dashboard_title">Driver Dashboard</string>
+    <string name="my_active_orders">My Active Orders</string>
+    <string name="no_active_orders">You have no active orders.</string>
+    <string name="available_orders">Available Orders</string>
+    <string name="no_available_orders">No available orders right now.</string>
+    <string name="order_id">"Order ID: %1$s..."</string>
+    <string name="on_the_way">On the Way</string>
+    <string name="delivered">Delivered</string>
+    <string name="new_order">New Order</string>
+    <string name="total_euros">"Total: %1$s €"</string>
+    <string name="accept">Accept</string>
+    <string name="location_permission_granted">Location permission granted.</string>
+    <string name="location_permission_denied">Location permission denied.</string>
 </resources>

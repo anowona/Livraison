@@ -11,11 +11,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.example.livraison.R
 import com.example.livraison.viewmodel.AuthViewModel
 
 @Composable
@@ -36,16 +38,16 @@ fun RegisterScreen(authViewModel: AuthViewModel, navController: NavHostControlle
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Create an Account", style = MaterialTheme.typography.headlineLarge)
-        Text("Get started with Munchies", style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(id = R.string.create_account), style = MaterialTheme.typography.headlineLarge)
+        Text(stringResource(id = R.string.get_started), style = MaterialTheme.typography.bodyLarge)
 
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
             value = uiState.email,
             onValueChange = { authViewModel.onEmailChange(it) },
-            label = { Text("Email") },
-            leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = "Email Icon") },
+            label = { Text(stringResource(id = R.string.email)) },
+            leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = stringResource(id = R.string.email_icon)) },
             isError = uiState.errorMessage != null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             singleLine = true,
@@ -57,8 +59,8 @@ fun RegisterScreen(authViewModel: AuthViewModel, navController: NavHostControlle
         OutlinedTextField(
             value = uiState.password,
             onValueChange = { authViewModel.onPasswordChange(it) },
-            label = { Text("Password") },
-            leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = "Password Icon") },
+            label = { Text(stringResource(id = R.string.password)) },
+            leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = stringResource(id = R.string.password_icon)) },
             visualTransformation = PasswordVisualTransformation(),
             isError = uiState.errorMessage != null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -71,8 +73,8 @@ fun RegisterScreen(authViewModel: AuthViewModel, navController: NavHostControlle
         OutlinedTextField(
             value = uiState.confirmPassword,
             onValueChange = { authViewModel.onConfirmPasswordChange(it) },
-            label = { Text("Confirm Password") },
-            leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = "Confirm Password Icon") },
+            label = { Text(stringResource(id = R.string.confirm_password)) },
+            leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = stringResource(id = R.string.confirm_password_icon)) },
             visualTransformation = PasswordVisualTransformation(),
             isError = uiState.errorMessage != null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -95,14 +97,14 @@ fun RegisterScreen(authViewModel: AuthViewModel, navController: NavHostControlle
             if (uiState.registrationInProgress) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
             } else {
-                Text("Register", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(id = R.string.register), style = MaterialTheme.typography.titleMedium)
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(onClick = { navController.navigate("login") }) {
-            Text("Already have an account? Login")
+            Text(stringResource(id = R.string.already_have_account))
         }
     }
 }

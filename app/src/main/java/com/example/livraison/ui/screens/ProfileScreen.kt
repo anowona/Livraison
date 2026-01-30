@@ -8,9 +8,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.livraison.R
 import com.example.livraison.model.Address
 import com.example.livraison.viewmodel.AuthViewModel
 
@@ -35,7 +37,7 @@ fun ProfileScreen(authViewModel: AuthViewModel, navController: NavHostController
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("My Profile") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(id = R.string.my_profile)) }) },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
@@ -49,8 +51,8 @@ fun ProfileScreen(authViewModel: AuthViewModel, navController: NavHostController
             // User Info Card
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Logged in as:", style = MaterialTheme.typography.labelMedium)
-                    Text(user?.email ?: "No email found", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(id = R.string.logged_in_as), style = MaterialTheme.typography.labelMedium)
+                    Text(user?.email ?: stringResource(id = R.string.no_email_found), style = MaterialTheme.typography.bodyLarge)
                 }
             }
 
@@ -62,19 +64,19 @@ fun ProfileScreen(authViewModel: AuthViewModel, navController: NavHostController
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("My Addresses", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(id = R.string.my_addresses), style = MaterialTheme.typography.titleMedium)
                         IconButton(onClick = { showAddAddressDialog = true }) {
-                            Icon(Icons.Outlined.Add, contentDescription = "Add Address")
+                            Icon(Icons.Outlined.Add, contentDescription = stringResource(id = R.string.add_address))
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     if (addresses.isEmpty()) {
-                        Text("No addresses saved.", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(id = R.string.no_addresses_saved), style = MaterialTheme.typography.bodyMedium)
                     } else {
                         Column {
                             addresses.forEach { address ->
                                 Text(address.name, fontWeight = FontWeight.Bold)
-                                Text("${address.street}, ${address.city}, ${address.postalCode}")
+                                Text(stringResource(id = R.string.address_display_format, address.street, address.city, address.postalCode))
                                 if (addresses.last() != address) {
                                     Divider(modifier = Modifier.padding(vertical = 8.dp))
                                 }
@@ -91,15 +93,15 @@ fun ProfileScreen(authViewModel: AuthViewModel, navController: NavHostController
                 onClick = { navController.navigate("order_history") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Outlined.History, contentDescription = "Order History", modifier = Modifier.size(18.dp))
+                Icon(Icons.Outlined.History, contentDescription = stringResource(id = R.string.view_order_history), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("View Order History")
+                Text(stringResource(id = R.string.view_order_history))
             }
 
             TextButton(onClick = { authViewModel.logout() }, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.ExitToApp, contentDescription = "Logout", modifier = Modifier.size(18.dp))
+                Icon(Icons.Outlined.ExitToApp, contentDescription = stringResource(id = R.string.logout), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Logout")
+                Text(stringResource(id = R.string.logout))
             }
         }
 
@@ -124,19 +126,19 @@ private fun AddAddressDialog(onDismiss: () -> Unit, onAddAddress: (Address) -> U
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add New Address") },
+        title = { Text(stringResource(id = R.string.add_new_address)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Address Name (e.g. Home)") })
-                OutlinedTextField(value = street, onValueChange = { street = it }, label = { Text("Street") })
-                OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("City") })
+                    label = { Text(stringResource(id = R.string.address_name_hint)) })
+                OutlinedTextField(value = street, onValueChange = { street = it }, label = { Text(stringResource(id = R.string.street)) })
+                OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(stringResource(id = R.string.city)) })
                 OutlinedTextField(
                     value = postalCode,
                     onValueChange = { postalCode = it },
-                    label = { Text("Postal Code") })
+                    label = { Text(stringResource(id = R.string.postal_code)) })
             }
         },
         confirmButton = {
@@ -144,12 +146,12 @@ private fun AddAddressDialog(onDismiss: () -> Unit, onAddAddress: (Address) -> U
                 val newAddress = Address(name = name, street = street, city = city, postalCode = postalCode)
                 onAddAddress(newAddress)
             }) {
-                Text("Add")
+                Text(stringResource(id = R.string.add))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(id = R.string.cancel))
             }
         }
     )

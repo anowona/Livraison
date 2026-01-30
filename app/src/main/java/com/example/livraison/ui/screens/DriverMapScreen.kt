@@ -26,19 +26,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.livraison.R
 import com.example.livraison.model.OrderStatus
 import com.example.livraison.network.RetrofitInstance
 import com.example.livraison.utils.decodePolyline
 import com.example.livraison.viewmodel.DriverViewModel
 import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
-import org.osmdroid.library.R
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -82,24 +83,24 @@ fun DriverMapScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Delivery Route") }) }
+        topBar = { TopAppBar(title = { Text(stringResource(id = R.string.delivery_route)) }) }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (order == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Loading order details...")
+                    Text(stringResource(id = R.string.loading_order_details))
                 }
             } else {
                 val currentOrder = order!!
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Delivering to:", style = MaterialTheme.typography.titleMedium)
-                    Text(currentOrder.address?.street ?: "Address not available", style = MaterialTheme.typography.headlineSmall)
+                    Text(stringResource(id = R.string.delivering_to), style = MaterialTheme.typography.titleMedium)
+                    Text(currentOrder.address?.street ?: stringResource(id = R.string.address_not_available), style = MaterialTheme.typography.headlineSmall)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 if (currentOrder.status == OrderStatus.DELIVERED || currentOrder.status == OrderStatus.CANCELED) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("This order has been completed.", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(id = R.string.order_completed), style = MaterialTheme.typography.bodyLarge)
                     }
                 } else {
                     Card(modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
@@ -113,7 +114,7 @@ fun DriverMapScreen(
                                 mapView.overlays.clear()
                                 val points = mutableListOf<GeoPoint>()
                                 val context = mapView.context
-                                val defaultMarker = ContextCompat.getDrawable(context, R.drawable.marker_default)!!
+                                val defaultMarker = ContextCompat.getDrawable(context, org.osmdroid.library.R.drawable.marker_default)!!
 
                                 currentOrder.address?.geoPoint?.let {
                                     val geoPoint = GeoPoint(it.latitude, it.longitude)
@@ -121,7 +122,7 @@ fun DriverMapScreen(
                                     DrawableCompat.setTint(customerMarkerIcon, primaryColor.toArgb())
                                     Marker(mapView).apply {
                                         position = geoPoint
-                                        title = "Delivery Address"
+                                        title = context.getString(R.string.delivery_address)
                                         icon = customerMarkerIcon
                                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                         mapView.overlays.add(this)
@@ -135,7 +136,7 @@ fun DriverMapScreen(
                                     DrawableCompat.setTint(driverMarkerIcon, secondaryColor.toArgb())
                                     Marker(mapView).apply {
                                         position = geoPoint
-                                        title = "Your Location"
+                                        title = context.getString(R.string.your_location)
                                         icon = driverMarkerIcon
                                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                         mapView.overlays.add(this)
