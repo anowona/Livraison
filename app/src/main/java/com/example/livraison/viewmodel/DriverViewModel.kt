@@ -28,6 +28,9 @@ class DriverViewModel : ViewModel() {
     private val _driverOrderHistory = MutableStateFlow<List<Order>>(emptyList())
     val driverOrderHistory: StateFlow<List<Order>> = _driverOrderHistory
 
+    private val _selectedOrder = MutableStateFlow<Order?>(null) // To hold the order for the map screen
+    val selectedOrder: StateFlow<Order?> = _selectedOrder
+
     private var locationUpdateJob: Job? = null
 
     fun fetchOrders(driverId: String) {
@@ -40,6 +43,14 @@ class DriverViewModel : ViewModel() {
             repository.getActiveOrdersForDriverFlow(driverId)
                 .catch { e -> Log.e("DriverViewModel", "Error fetching active orders", e) }
                 .collect { orders -> _myOrders.value = orders }
+        }
+    }
+    
+    fun fetchOrderById(orderId: String) {
+        viewModelScope.launch {
+             repository.getOrderByIdFlow(orderId)
+                .catch { e -> Log.e("DriverViewModel", "Error fetching order by id", e) }
+                .collect { order -> _selectedOrder.value = order }
         }
     }
 

@@ -139,6 +139,14 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun observeOrderById(orderId: String) {
+        viewModelScope.launch {
+            repository.getOrderByIdFlow(orderId)
+                .catch { e -> Log.e("MainViewModel", "Error observing order by id", e) }
+                .collect { order -> _currentOrder.value = order }
+        }
+    }
+
     fun loadOrderHistory(userId: String) {
         viewModelScope.launch {
             repository.getOrdersByUserFlow(userId)
@@ -157,33 +165,33 @@ class MainViewModel : ViewModel() {
             Category(
                 name = "Burgers",
                 products = listOf(
-                    Product(1, "Classic Burger", 8.99, "https://cdn.pixabay.com/photo/2016/03/05/19/02/hamburger-1238246_1280.jpg"),
-                    Product(2, "Cheeseburger", 9.99, "https://cdn.pixabay.com/photo/2017/08/06/00/28/burger-2589259_1280.jpg"),
-                    Product(3, "Bacon Burger", 10.99, "https://cdn.pixabay.com/photo/2019/01/29/18/05/burger-3962496_1280.jpg")
+                    Product(1, "Classic Burger", 8.99, "https://images.unsplash.com/photo-1571091718767-18b5b1457add?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1172&q=80"),
+                    Product(2, "Cheeseburger", 9.99, "https://images.unsplash.com/photo-1607013251379-e6eecfffe234?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"),
+                    Product(3, "Bacon Burger", 10.99, "https://images.unsplash.com/photo-1551984318-c8a8b13d29b8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80")
                 )
             ),
             Category(
                 name = "Pizzas",
                 products = listOf(
-                    Product(4, "Margherita Pizza", 12.50, "https://cdn.pixabay.com/photo/2017/12/09/08/18/pizza-3007395_1280.jpg"),
-                    Product(5, "Pepperoni Pizza", 14.00, "https://cdn.pixabay.com/photo/2020/05/17/04/22/pizza-5179939_1280.jpg"),
-                    Product(6, "Vegetarian Pizza", 13.00, "https://cdn.pixabay.com/photo/2017/01/03/11/33/pizza-1949183_1280.jpg")
+                    Product(4, "Margherita Pizza", 12.50, "https://images.unsplash.com/photo-1594007654729-407eedc4be65?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=728&q=80"),
+                    Product(5, "Pepperoni Pizza", 14.00, "https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1176&q=80"),
+                    Product(6, "Vegetarian Pizza", 13.00, "https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80")
                 )
             ),
             Category(
                 name = "Desserts",
                 products = listOf(
-                    Product(7, "Chocolate Cake", 6.50, "https://cdn.pixabay.com/photo/2016/11/22/18/52/cake-1850011_1280.jpg"),
-                    Product(8, "Cheesecake", 7.00, "https://cdn.pixabay.com/photo/2018/05/01/18/21/eclair-3366430_1280.jpg"),
-                    Product(9, "Ice Cream Scoop", 3.00, "https://cdn.pixabay.com/photo/2017/06/29/20/09/ice-cream-2455593_1280.jpg")
+                    Product(7, "Chocolate Cake", 6.50, "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"),
+                    Product(8, "Cheesecake", 7.00, "https://images.unsplash.com/photo-1542826438-62a34865269f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"),
+                    Product(9, "Ice Cream Scoop", 3.00, "https://images.unsplash.com/photo-1580915411954-155191d58226?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80")
                 )
             ),
             Category(
                 name = "Drinks",
                 products = listOf(
-                    Product(10, "Coca-Cola", 2.50, "https://cdn.pixabay.com/photo/2014/09/26/19/51/coca-cola-462776_1280.jpg"),
-                    Product(11, "Orange Juice", 3.00, "https://cdn.pixabay.com/photo/2017/01/20/15/06/oranges-1995056_1280.jpg"),
-                    Product(12, "Water Bottle", 1.50, "https://cdn.pixabay.com/photo/2018/01/07/16/07/water-3067838_1280.jpg")
+                    Product(10, "Coca-Cola", 2.50, "https://images.unsplash.com/photo-1554866585-CD94860890b7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=764&q=80"),
+                    Product(11, "Orange Juice", 3.00, "https://images.unsplash.com/photo-1600271886742-f049cd451bba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"),
+                    Product(12, "Water Bottle", 1.50, "https://images.unsplash.com/photo-1523961131990-5ea7c61b2107?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80")
                 )
             )
         )

@@ -5,8 +5,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.livraison.ui.screens.*
 import com.example.livraison.viewmodel.AuthViewModel
 import com.example.livraison.viewmodel.DriverViewModel
@@ -29,7 +31,7 @@ fun ClientNavGraph(vm: MainViewModel, navController: NavHostController) {
             val onCheckout = {
                 if (isLoggedIn) {
                     navController.navigate("tracking") {
-                        popUpTo("cart") { inclusive = true } // This will remove the cart from the back stack
+                        popUpTo("cart") { inclusive = true } 
                     }
                 } else {
                     navController.navigate("login")
@@ -37,18 +39,21 @@ fun ClientNavGraph(vm: MainViewModel, navController: NavHostController) {
             }
             CartScreen(vm, authViewModel, navController, onCheckout)
         }
-        composable("tracking") {
+        composable(
+            "tracking?orderId={orderId}",
+            arguments = listOf(navArgument("orderId") { nullable = true })
+        ) {
+            val orderId = it.arguments?.getString("orderId")
             val currentUserId = authState.user?.uid
             if (!currentUserId.isNullOrBlank()) {
-                OrderTrackingScreen(vm, navController, currentUserId)
+                OrderTrackingScreen(vm, navController, currentUserId, orderId)
             }
         }
         composable("map") {
             OSMMapScreen()
         }
-        composable("profile") { // Added profile route
+        composable("profile") { 
             if (isLoggedIn) {
-                // Create a ProfileScreen for logged in users
                 ProfileScreen(authViewModel, navController)
             } else {
                 LoginScreen(authViewModel, navController)
@@ -57,7 +62,8 @@ fun ClientNavGraph(vm: MainViewModel, navController: NavHostController) {
         composable("order_history") {
             OrderHistoryScreen(
                 vm, authViewModel,
-                driverViewModel = driverViewModel
+                driverViewModel = driverViewModel,
+                navController = navController
             )
         }
     }

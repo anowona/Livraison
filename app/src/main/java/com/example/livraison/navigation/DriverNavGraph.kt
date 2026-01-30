@@ -7,12 +7,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.livraison.ui.screens.DriverDashboardScreen
-import com.example.livraison.ui.screens.LoginScreen
-import com.example.livraison.ui.screens.OrderHistoryScreen
-import com.example.livraison.ui.screens.ProfileScreen
+import androidx.navigation.navArgument
+import com.example.livraison.ui.screens.*
 import com.example.livraison.viewmodel.AuthViewModel
 import com.example.livraison.viewmodel.DriverViewModel
 import com.example.livraison.viewmodel.MainViewModel
@@ -40,10 +39,11 @@ fun DriverNavGraph(navController: NavHostController) {
         composable("driver_dashboard") {
             DriverDashboardScreen(
                 driverViewModel = driverViewModel,
-                authViewModel = authViewModel
+                authViewModel = authViewModel,
+                navController = navController // Pass the NavController
             )
         }
-        composable("profile") { // Added profile route
+        composable("profile") { 
             if (isLoggedIn) {
                 ProfileScreen(authViewModel, navController)
             } else {
@@ -51,7 +51,14 @@ fun DriverNavGraph(navController: NavHostController) {
             }
         }
         composable("order_history") {
-            OrderHistoryScreen(mainViewModel, authViewModel, driverViewModel)
+            OrderHistoryScreen(mainViewModel, authViewModel, driverViewModel, navController)
+        }
+        composable(
+            "driver_map/{orderId}",
+            arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+        ) {
+            val orderId = it.arguments?.getString("orderId") ?: ""
+            DriverMapScreen(navController = navController, orderId = orderId)
         }
     }
 }

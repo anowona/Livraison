@@ -38,6 +38,18 @@ class OrderRepository {
 
     // --- Real-time Data Flows ---
 
+    fun getOrderByIdFlow(orderId: String): Flow<Order?> = callbackFlow {
+        val listener = ordersRef.document(orderId).addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                close(e)
+                return@addSnapshotListener
+            }
+            val order = snapshot?.toObject(Order::class.java)?.copy(id = snapshot.id)
+            trySend(order)
+        }
+        awaitClose { listener.remove() }
+    }
+
     fun getAvailableOrdersFlow(): Flow<List<Order>> = callbackFlow {
         val listener = ordersRef.whereEqualTo("status", OrderStatus.CREATED.name)
             .addSnapshotListener { snapshots, e ->

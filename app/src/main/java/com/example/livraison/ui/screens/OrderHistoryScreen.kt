@@ -1,5 +1,6 @@
 package com.example.livraison.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.livraison.model.Order
 import com.example.livraison.viewmodel.AuthViewModel
 import com.example.livraison.viewmodel.DriverViewModel
@@ -39,13 +41,14 @@ import java.util.Locale
 fun OrderHistoryScreen(
     mainViewModel: MainViewModel,
     authViewModel: AuthViewModel,
-    driverViewModel: DriverViewModel
+    driverViewModel: DriverViewModel,
+    navController: NavHostController // Added NavController
 ) {
     val authState by authViewModel.uiState.collectAsState()
     val user = authState.user
     val userRole = authState.role
 
-    val orderHistory: List<Order> by if (userRole == "driver") {
+    val orderHistory: List<Order> by if (userRole == "livreur") { // Use "livreur"
         driverViewModel.driverOrderHistory.collectAsState()
     } else {
         mainViewModel.orderHistory.collectAsState()
@@ -53,7 +56,7 @@ fun OrderHistoryScreen(
 
     LaunchedEffect(user, userRole) {
         if (user != null) {
-            if (userRole == "driver") {
+            if (userRole == "livreur") { // Use "livreur"
                 driverViewModel.loadDriverOrderHistory(user.uid)
             } else {
                 mainViewModel.loadOrderHistory(user.uid)
@@ -78,7 +81,13 @@ fun OrderHistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(orderHistory) { order ->
-                    OrderHistoryCard(order = order)
+                    OrderHistoryCard(order = order, onClick = {
+                        if (userRole == "client") {
+                            navController.navigate("tracking?orderId=${order.id}")
+                        } else if (userRole == "livreur") {
+                            navController.navigate("driver_map/${order.id}")
+                        }
+                    })
                 }
             }
         }
@@ -86,11 +95,11 @@ fun OrderHistoryScreen(
 }
 
 @Composable
-fun OrderHistoryCard(order: Order) {
+fun OrderHistoryCard(order: Order, onClick: () -> Unit) {
     val dateFormatter = SimpleDateFormat("MMMM d, yyyy 'at' h:mm a", Locale.getDefault())
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -100,7 +109,7 @@ fun OrderHistoryCard(order: Order) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Order #${order.id}...",
+                    text = "Order #${order.id.take(6)}...",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

@@ -1,23 +1,41 @@
 package com.example.livraison.ui.screens
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.livraison.model.OrderStatus
 import com.example.livraison.network.RetrofitInstance
-import com.example.livraison.utils.decodePolyline // Use the shared utility function
-import com.example.livraison.viewmodel.MainViewModel
+import com.example.livraison.utils.decodePolyline
+import com.example.livraison.viewmodel.DriverViewModel
 import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.R
@@ -29,30 +47,25 @@ import org.osmdroid.views.overlay.Polyline
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OrderTrackingScreen(
-    vm: MainViewModel,
+fun DriverMapScreen(
     navController: NavHostController,
-    userId: String,
-    orderId: String? // Added optional orderId
+    orderId: String,
+    driverViewModel: DriverViewModel = viewModel()
 ) {
-    val currentOrder by vm.currentOrder.collectAsState()
+    val order by driverViewModel.selectedOrder.collectAsState()
     var routeGeometry by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     val primaryColor = MaterialTheme.colorScheme.primary
     val secondaryColor = MaterialTheme.colorScheme.secondary
 
-    LaunchedEffect(userId, orderId) {
-        if (orderId != null) {
-            vm.observeOrderById(orderId)
-        } else {
-            vm.observeCurrentOrder(userId)
-        }
+    LaunchedEffect(orderId) {
+        driverViewModel.fetchOrderById(orderId)
     }
 
-    LaunchedEffect(currentOrder?.driverLocation, currentOrder?.address?.geoPoint) {
-        val driverLoc = currentOrder?.driverLocation
-        val customerLoc = currentOrder?.address?.geoPoint
+    LaunchedEffect(order?.driverLocation, order?.address?.geoPoint) {
+        val driverLoc = order?.driverLocation
+        val customerLoc = order?.address?.geoPoint
         if (driverLoc != null && customerLoc != null) {
             scope.launch {
                 try {
@@ -69,28 +82,27 @@ fun OrderTrackingScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Track Your Order") }) }
+        topBar = { TopAppBar(title = { Text("Delivery Route") }) }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (currentOrder == null) {
+            if (order == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Loading order...", style = MaterialTheme.typography.bodyLarge)
+                    Text("Loading order details...")
                 }
             } else {
-                val order = currentOrder!!
+                val currentOrder = order!!
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Order #${order.id.take(6)}...", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OrderStatusIndicator(status = order.status)
+                    Text("Delivering to:", style = MaterialTheme.typography.titleMedium)
+                    Text(currentOrder.address?.street ?: "Address not available", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Only show the map for active orders
-                if (order.status == OrderStatus.DELIVERED || order.status == OrderStatus.CANCELED) {
-                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                if (currentOrder.status == OrderStatus.DELIVERED || currentOrder.status == OrderStatus.CANCELED) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("This order has been completed.", style = MaterialTheme.typography.bodyLarge)
                     }
-                } else if (order.driverLocation != null || order.address?.geoPoint != null) {
-                    Card(modifier = Modifier.fillMaxWidth().height(450.dp).padding(horizontal = 16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+                } else {
+                    Card(modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp), elevation = CardDefaults.cardElevation(4.dp)) {
                         AndroidView(
                             modifier = Modifier.fillMaxSize(),
                             factory = { context ->
@@ -103,7 +115,7 @@ fun OrderTrackingScreen(
                                 val context = mapView.context
                                 val defaultMarker = ContextCompat.getDrawable(context, R.drawable.marker_default)!!
 
-                                order.address?.geoPoint?.let {
+                                currentOrder.address?.geoPoint?.let {
                                     val geoPoint = GeoPoint(it.latitude, it.longitude)
                                     val customerMarkerIcon = defaultMarker.mutate()
                                     DrawableCompat.setTint(customerMarkerIcon, primaryColor.toArgb())
@@ -117,13 +129,13 @@ fun OrderTrackingScreen(
                                     points.add(geoPoint)
                                 }
 
-                                order.driverLocation?.let {
+                                currentOrder.driverLocation?.let {
                                     val geoPoint = GeoPoint(it.latitude, it.longitude)
                                     val driverMarkerIcon = defaultMarker.mutate()
                                     DrawableCompat.setTint(driverMarkerIcon, secondaryColor.toArgb())
                                     Marker(mapView).apply {
                                         position = geoPoint
-                                        title = "Driver"
+                                        title = "Your Location"
                                         icon = driverMarkerIcon
                                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                         mapView.overlays.add(this)
@@ -132,7 +144,7 @@ fun OrderTrackingScreen(
                                 }
 
                                 routeGeometry?.let {
-                                    val routePoints = decodePolyline(it, 5) 
+                                    val routePoints = decodePolyline(it, 5)
                                     val polyline = Polyline().apply {
                                         setPoints(routePoints)
                                         outlinePaint.color = Color(0xFF4A80F5).toArgb()
@@ -143,7 +155,7 @@ fun OrderTrackingScreen(
 
                                 if (points.size > 1) {
                                     mapView.post { mapView.zoomToBoundingBox(BoundingBox.fromGeoPoints(points), true, 150) }
-                                } else if (points.isNotEmpty()){
+                                } else if (points.isNotEmpty()) {
                                     mapView.controller.setZoom(16.0)
                                     mapView.controller.setCenter(points[0])
                                 }
@@ -151,41 +163,8 @@ fun OrderTrackingScreen(
                             }
                         )
                     }
-                } else {
-                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Waiting for driver location...", style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun OrderStatusIndicator(status: OrderStatus) {
-    val progress = when (status) {
-        OrderStatus.CREATED -> 0.2f
-        OrderStatus.PREPARING -> 0.5f
-        OrderStatus.ON_THE_WAY -> 0.8f
-        OrderStatus.DELIVERED -> 1.0f
-        OrderStatus.CANCELED -> 0.0f
-    }
-
-    val animatedProgress by animateFloatAsState(targetValue = progress, label = "Order Progress")
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Status: $status", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        LinearProgressIndicator(
-            progress = { animatedProgress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(MaterialTheme.shapes.medium)
-        )
     }
 }
